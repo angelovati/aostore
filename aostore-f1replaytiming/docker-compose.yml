@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: aostore-f1replaytiming_web_1
+      APP_PORT: 8000
+
+  web:
+    image: ghcr.io/adn8naiagent/f1replaytiming:2.1.3@sha256:ce16fd12a95fe0c84444c58f2ebd20eaf68a400da130a6e402c218a37f93369c
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 8000
+      DATA_DIR: /data
+      FASTF1_CACHE_DIR: /data/fastf1-cache
+      STORAGE_MODE: local
+      AUTO_PRECOMPUTE: race+qual
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

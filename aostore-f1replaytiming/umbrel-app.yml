@@ -1,0 +1,58 @@
+manifestVersion: 1
+id: aostore-f1replaytiming
+category: media
+name: F1 Replay Timing
+version: "2.1.3"
+tagline: Watch Formula 1 sessions with real timing data, live or as replays
+icon: https://raw.githubusercontent.com/adn8naiagent/F1ReplayTiming/0a93d68b767e83238a350c0e76757d1a9337ea7f/frontend/public/logo.png
+description: >-
+  F1 Replay Timing is a web app for watching Formula 1 sessions with real
+  timing data, car positions on track, driver telemetry and more — both live
+  during race weekends and as replays of past sessions.
+
+
+  Features include:
+
+  - Live timing (beta) from the F1 SignalR stream, with a broadcast delay slider
+
+  - Track map with real-time car positions, marshal sector flags and corner numbers
+
+  - Driver leaderboard with gaps, intervals, sectors, tyres, pit stops and penalties
+
+  - Race control messages, weather data and track status flags
+
+  - Pit position prediction, telemetry comparison and lap analysis
+
+  - Playback controls from 0.5x to 20x, lap jumping and broadcast sync
+
+  - Races, qualifying, sprints and practice sessions from 2024 onwards
+
+
+  Session data is processed on demand the first time you open a session
+  (this takes 1-3 minutes) and stored locally, so later loads are instant.
+  During race weekends the app also pre-fetches new race and qualifying
+  sessions in the background.
+
+
+  This project is unofficial and is not associated in any way with the
+  Formula 1 companies. It is intended for personal, non-commercial use only.
+releaseNotes: >-
+  - Storage management: a Storage button shows total disk use and sets a
+  retention policy to delete old sessions automatically. Individual sessions
+  can be deleted by right-clicking them in the session picker.
+
+  - Fixed replays freezing after a dropped connection.
+
+  - Fixed the app being unreachable behind a reverse proxy when PORT was set.
+developer: adn8naiagent
+website: https://github.com/adn8naiagent/F1ReplayTiming
+dependencies: []
+repo: https://github.com/adn8naiagent/F1ReplayTiming
+support: https://github.com/adn8naiagent/F1ReplayTiming/issues
+port: 8461
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore
