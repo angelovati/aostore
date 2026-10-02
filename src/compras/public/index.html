@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compras del Hogar</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Compras del Hogar</h1>
+    <p>Busca cada producto en los supermercados, confirma que haya stock y te dice dónde conviene comprarlo.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label for="list">Lista de compras <span class="hint">— un producto por línea, con la cantidad adelante si querés más de uno (ej.: <code>2 x Leche entera 1 l</code>)</span></label>
+      <textarea id="list" rows="6" placeholder="Papel Higiénico Higienol de hoja simple en pack de 4 rollos x 100 m&#10;2 x Yerba mate Playadito 1 kg"></textarea>
+      <fieldset id="stores"><legend>Supermercados</legend></fieldset>
+      <div class="actions">
+        <button id="compare" class="primary">Comparar precios</button>
+        <span id="status" role="status"></span>
+      </div>
+    </section>
+
+    <section id="plan" class="panel" hidden></section>
+    <section id="results"></section>
+  </main>
+
+  <template id="item-tpl">
+    <article class="item">
+      <header>
+        <h2></h2>
+        <span class="badge best" hidden></span>
+      </header>
+      <div class="rows"></div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

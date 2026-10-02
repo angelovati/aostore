@@ -1,0 +1,122 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c2129;
+  --muted: #5f6b7a;
+  --border: #dde2e8;
+  --accent: #1a7f4b;
+  --accent-text: #ffffff;
+  --best-bg: #e8f6ee;
+  --warn: #9a6200;
+  --warn-bg: #fff5e0;
+  --bad: #b3261e;
+  --bad-bg: #fdecea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151a;
+    --surface: #1b2027;
+    --text: #e7eaee;
+    --muted: #9aa5b1;
+    --border: #2d343e;
+    --accent: #3fb47a;
+    --accent-text: #0b1a12;
+    --best-bg: #17301f;
+    --warn: #f0b252;
+    --warn-bg: #33270f;
+    --bad: #f28b82;
+    --bad-bg: #3a1a18;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+body > header, main { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+body > header { padding-top: 24px; }
+h1 { margin: 0 0 4px; font-size: 1.6rem; }
+body > header p { margin: 0 0 16px; color: var(--muted); }
+.panel, .item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+label { font-weight: 600; display: block; margin-bottom: 6px; }
+.hint { font-weight: 400; color: var(--muted); }
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+fieldset { border: none; padding: 0; margin: 12px 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+fieldset label { font-weight: 400; display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+button, .btn {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-block;
+}
+.primary, .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button:disabled { opacity: .6; cursor: wait; }
+#status { color: var(--muted); }
+
+.item > header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.item h2 { font-size: 1.05rem; margin: 0; }
+.row {
+  display: grid;
+  grid-template-columns: 9rem 1fr auto auto;
+  gap: 4px 14px;
+  align-items: center;
+  padding: 10px 8px;
+  border-top: 1px solid var(--border);
+}
+.row.best { background: var(--best-bg); border-radius: 8px; border-top-color: transparent; }
+.row.best + .row { border-top-color: transparent; }
+.store { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.title { min-width: 0; }
+.title a { color: inherit; }
+.title small { display: block; color: var(--muted); }
+.price { text-align: right; font-variant-numeric: tabular-nums; }
+.price strong { font-size: 1.1rem; }
+.price s, .price small { display: block; color: var(--muted); font-size: .85rem; }
+.badge { font-size: .8rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.badge.best { background: var(--accent); color: var(--accent-text); }
+.stock-in { color: var(--accent); }
+.stock-unknown { color: var(--warn); }
+.stock-out, .stock-error { color: var(--bad); }
+.row.muted .title, .row.muted .price { color: var(--muted); }
+
+#plan h2 { margin: 0 0 10px; font-size: 1.15rem; }
+.cart { border-top: 1px solid var(--border); padding: 10px 0; }
+.cart h3 { margin: 0 0 6px; font-size: 1rem; display: flex; justify-content: space-between; gap: 12px; }
+.cart ul { margin: 0; padding-left: 18px; }
+.cart li { margin: 2px 0; }
+.cart li a { color: inherit; }
+.total { display: flex; justify-content: space-between; font-weight: 700; border-top: 2px solid var(--border); padding-top: 10px; }
+.missing { color: var(--bad); margin-top: 8px; }
+
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr auto; }
+  .store { grid-column: 1 / -1; }
+  .title { grid-column: 1 / -1; }
+  .price { text-align: left; }
+}

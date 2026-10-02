@@ -1,0 +1,50 @@
+manifestVersion: 1
+id: aostore-compras
+category: finance
+name: Compras del Hogar
+version: "0.1.0"
+tagline: Compara precios y stock entre supermercados y te dice dónde comprar cada producto
+icon: https://raw.githubusercontent.com/angelovati/aostore/main/src/compras/public/icon.svg
+description: >-
+  Compras del Hogar busca cada producto de tu lista en varios supermercados
+  online de Argentina, identifica el mismo producto en cada uno (marca,
+  variante y presentación) y te dice dónde conviene comprarlo.
+
+
+  Antes de recomendar una tienda vuelve a consultar el stock del producto, para
+  no sugerirte armar un carrito con algo que ya no está disponible.
+
+
+  Supermercados incluidos:
+
+  - Mercado Libre
+
+  - Día
+
+  - Vea
+
+  - La Anónima
+
+  - Masonline (Chango Más)
+
+
+  Escribí un producto por línea, por ejemplo "Papel Higiénico Higienol de hoja
+  simple en pack de 4 rollos x 100 m" o "2 x Leche entera 1 l", y la app arma
+  un carrito por supermercado con el total.
+
+
+  Los precios de La Anónima dependen de la sucursal elegida.
+releaseNotes: >-
+  Primera versión.
+developer: angelovati
+website: https://github.com/angelovati/aostore
+dependencies: []
+repo: https://github.com/angelovati/aostore/tree/main/src/compras
+support: https://github.com/angelovati/aostore/issues
+port: 3742
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore
