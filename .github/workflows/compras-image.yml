@@ -2,7 +2,6 @@ name: Compras image
 
 on:
   push:
-    branches: [main]
     paths: ["src/compras/**", ".github/workflows/compras-image.yml"]
   pull_request:
     paths: ["src/compras/**", ".github/workflows/compras-image.yml"]
@@ -29,6 +28,9 @@ jobs:
   image:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      # Publish only from the default branch (the one umbrelOS reads the store from)
+      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
     steps:
       - uses: actions/checkout@v4
       - id: version
@@ -36,7 +38,7 @@ jobs:
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
+        if: env.PUBLISH == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -45,7 +47,7 @@ jobs:
         with:
           context: src/compras
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ env.PUBLISH == 'true' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/aostore-compras:${{ steps.version.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/aostore-compras:latest

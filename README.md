@@ -30,6 +30,6 @@ Pin images by version and digest, and pick a `port` that no other umbrelOS app u
 
 Apps built in this repo keep their source under `src/<app>`. The
 `Compras image` workflow tests `src/compras` and publishes
-`ghcr.io/angelovati/aostore-compras` for amd64 and arm64 on every push to `main`.
+`ghcr.io/angelovati/aostore-compras` for amd64 and arm64 on every push to the default branch.
 After the first publish, make the package public in GitHub and pin its digest in
 `aostore-compras/docker-compose.yml`.
