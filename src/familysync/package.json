@@ -1,0 +1,15 @@
+{
+  "name": "aostore-familysync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Organizador familiar: turnos médicos, pagos, vacunas y mantenimiento del auto, con calendario para el celular",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
