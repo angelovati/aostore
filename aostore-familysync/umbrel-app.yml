@@ -2,7 +2,7 @@ manifestVersion: 1
 id: aostore-familysync
 category: files
 name: FamilySync
-version: "0.1.1"
+version: "0.1.2"
 tagline: La agenda de la familia, turnos médicos, pagos, vacunas y el auto en un solo lugar
 icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/src/familysync/public/icon.svg
 description: >-
@@ -30,8 +30,8 @@ description: >-
   Próximamente: lista de compras sincronizada con Recordatorios de iOS y
   calendario deportivo (Fórmula 1, Boca Juniors y la Selección Argentina).
 releaseNotes: >-
-  FamilySync se puede abrir detrás de un proxy en una subruta, por ejemplo
-  embebida en Home Assistant con hass_ingress.
+  Nuevo puerto 3744 sin el login de umbrelOS, para embeber FamilySync en
+  Home Assistant con hass_ingress. Cualquiera en tu red local puede abrirlo.
 developer: angelovati
 website: https://github.com/angelovati/aostore
 dependencies: []

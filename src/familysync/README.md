@@ -47,6 +47,27 @@ prefijo antes de reenviar, como el ingress de Home Assistant
   dirección directa (`FEED_BASE_URL`), porque la del proxy pide el login de
   Home Assistant y el celular no puede hacerlo.
 
+### Configuración en Home Assistant
+
+En umbrelOS la app escucha en dos puertos:
+
+- `3743`: el de siempre, con el login de umbrelOS.
+- `3744`: directo al contenedor, sin login, para Home Assistant. hass_ingress
+  pide la app desde el servidor de HA, que no tiene la sesión de Umbrel, así
+  que por `3743` recibiría la pantalla de login. Cualquiera en la red local
+  puede abrir este puerto.
+
+Con [hass_ingress](https://github.com/lovelylain/hass_ingress) instalado desde
+HACS, en `configuration.yaml`:
+
+```yaml
+ingress:
+  familysync:
+    title: FamilySync
+    icon: mdi:calendar-heart
+    url: http://192.168.0.104:3744
+```
+
 Para probarlo localmente:
 
 ```sh

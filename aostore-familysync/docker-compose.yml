@@ -20,5 +20,10 @@ services:
       # Calendar feed link shown when the app is opened through a proxy such as
       # Home Assistant ingress, whose own address needs a Home Assistant login
       FEED_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:3743/"
+    # Direct port for Home Assistant (hass_ingress), without the umbrelOS
+    # login that app_proxy adds on 3743: HA requests the app from its server,
+    # which has no Umbrel session. Anyone on the local network can open it.
+    ports:
+      - "3744:3000"
     volumes:
       - ${APP_DATA_DIR}/data:/data
