@@ -30,6 +30,31 @@ desde el iPhone, la Mac o Google Calendar.
   para esa ruta (`PROXY_AUTH_WHITELIST` en el `docker-compose.yml`), porque la
   app de calendario del celular no puede iniciar sesión.
 
+## Detrás de un proxy (Home Assistant)
+
+La app funciona servida en una subruta cualquiera por un proxy que quita ese
+prefijo antes de reenviar, como el ingress de Home Assistant
+(`https://mi-ha/api/ingress/<nombre>/`):
+
+- El frontend usa solo URLs relativas (`api/…`, `styles.css`, `cal/…`) y el
+  routing es por hash. `test/subpath.test.js` falla si aparece una ruta
+  absoluta.
+- Si se abre la subruta sin barra final, `index.html` la agrega antes de
+  cargar nada.
+- No se envían `X-Frame-Options` ni CSP, no hay redirects ni cookies, así que
+  se puede embeber en un iframe.
+- Abierta a través del proxy, la sección Familia muestra el calendario con la
+  dirección directa (`FEED_BASE_URL`), porque la del proxy pide el login de
+  Home Assistant y el celular no puede hacerlo.
+
+Para probarlo localmente:
+
+```sh
+npm start                                                         # :3000
+node scripts/subpath-proxy.js http://127.0.0.1:3000 8099 /prueba/subpath/
+# http://127.0.0.1:8099/prueba/subpath/  y  http://127.0.0.1:8099/iframe.html
+```
+
 ## API
 
 - `GET|POST /api/<colección>`, `PUT|DELETE /api/<colección>/<id>` para
@@ -39,7 +64,8 @@ desde el iPhone, la Mac o Google Calendar.
 - `POST /api/payments/<id>/paid` `{ "date": "2026-10-10", "paid": true }`
 - `POST /api/vaccines/plan` `{ "memberId": "…", "markPastApplied": true }`:
   agrega las vacunas del calendario nacional que falten.
-- `GET /api/settings`: ruta del feed de calendario.
+- `GET /api/settings`: ruta relativa del feed de calendario y, si está
+  configurada, su dirección directa.
 
 ## Desarrollo
 
@@ -48,4 +74,6 @@ npm test
 npm start   # http://localhost:3000
 ```
 
-Variables: `PORT`, `DATA_DIR` y `TZ` (por defecto `America/Argentina/Buenos_Aires`).
+Variables: `PORT`, `DATA_DIR`, `TZ` (por defecto `America/Argentina/Buenos_Aires`)
+y `FEED_BASE_URL` (dirección directa de la app, por ejemplo
+`http://umbrel.local:3743/`).

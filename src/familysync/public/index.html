@@ -7,14 +7,27 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="FamilySync">
   <title>FamilySync</title>
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Opened as ".../subpath" without the trailing slash (behind a proxy such
+    // as Home Assistant ingress), relative URLs would resolve against the
+    // parent folder: add the slash first. Assets are written from here, not
+    // as plain tags, so the browser does not prefetch them from the wrong place.
+    if (!location.pathname.endsWith('/') && !/\.\w+$/.test(location.pathname)) {
+      location.replace(location.pathname + '/' + location.search + location.hash);
+    } else {
+      document.write(
+        '<link rel="icon" href="icon.svg" type="image/svg+xml">' +
+        '<link rel="apple-touch-icon" href="icon.svg">' +
+        '<link rel="manifest" href="manifest.webmanifest">' +
+        '<link rel="stylesheet" href="styles.css">' +
+        '<script src="app.js" defer><\/script>'
+      );
+    }
+  </script>
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="#inicio"><img src="icon.svg" alt="" width="32" height="32"> FamilySync</a>
+    <a class="brand" href="#inicio">FamilySync</a>
     <nav id="nav" aria-label="Secciones"></nav>
   </header>
 
@@ -34,6 +47,5 @@
     </form>
   </dialog>
 
-  <script src="app.js"></script>
 </body>
 </html>

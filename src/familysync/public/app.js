@@ -13,6 +13,8 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+// URLs are relative ("api/…"): they resolve against the page's address, so the
+// app also works behind a proxy that serves it under a subpath (HA ingress)
 async function api(method, url, body) {
   const res = await fetch(url, {
     method,
@@ -63,7 +65,7 @@ const db = Object.fromEntries(COLLECTIONS.map((c) => [c, []]));
 const ui = { month: todayIso().slice(0, 7), selectedDay: null, payMonth: todayIso().slice(0, 7), memberFilter: '', vaccineMember: '' };
 
 async function load(names = COLLECTIONS) {
-  const lists = await Promise.all(names.map((n) => api('GET', `/api/${n}`)));
+  const lists = await Promise.all(names.map((n) => api('GET', `api/${n}`)));
   names.forEach((n, i) => (db[n] = lists[i]));
 }
 const byId = (name, id) => db[name].find((x) => x.id === id);
@@ -206,7 +208,7 @@ function openForm(name, item = null, defaults = {}) {
         body[f.name] = v === '' ? null : f.type === 'number' ? Number(v) : v;
       }
       try {
-        await api(item ? 'PUT' : 'POST', item ? `/api/${name}/${item.id}` : `/api/${name}`, body);
+        await api(item ? 'PUT' : 'POST', item ? `api/${name}/${item.id}` : `api/${name}`, body);
         dialog.close();
       } catch (err) {
         fail(err);
@@ -215,7 +217,7 @@ function openForm(name, item = null, defaults = {}) {
     $('#form-delete').onclick = async () => {
       if (!confirm('¿Borrar este registro?')) return;
       try {
-        await api('DELETE', `/api/${name}/${item.id}`);
+        await api('DELETE', `api/${name}/${item.id}`);
         dialog.close();
       } catch (err) {
         fail(err);
@@ -248,11 +250,11 @@ function eventAction(e) {
     el('button', { class: `small toggle${e.done ? ' on' : ''}`, onclick: async () => { await fn(); await load(); render(); } }, e.done ? `✓ ${onLabel}` : label);
   switch (e.module) {
     case 'payments':
-      return toggle('Marcar pagado', 'Pagado', () => api('POST', `/api/payments/${e.ref}/paid`, { date: e.date, paid: !e.done }));
+      return toggle('Marcar pagado', 'Pagado', () => api('POST', `api/payments/${e.ref}/paid`, { date: e.date, paid: !e.done }));
     case 'appointments':
-      return toggle('Marcar realizado', 'Realizado', () => api('PUT', `/api/appointments/${e.ref}`, { status: e.done ? 'pendiente' : 'realizado' }));
+      return toggle('Marcar realizado', 'Realizado', () => api('PUT', `api/appointments/${e.ref}`, { status: e.done ? 'pendiente' : 'realizado' }));
     case 'vaccines':
-      return toggle('Marcar aplicada', 'Aplicada', () => api('PUT', `/api/vaccines/${e.ref}`, { appliedDate: e.done ? null : todayIso() }));
+      return toggle('Marcar aplicada', 'Aplicada', () => api('PUT', `api/vaccines/${e.ref}`, { appliedDate: e.done ? null : todayIso() }));
     default:
       return null;
   }
@@ -289,8 +291,8 @@ async function viewHome() {
   const start = addDays(first, -((parse(first).getUTCDay() + 6) % 7));
   const end = addDays(start, 41);
   const [monthEvents, around] = await Promise.all([
-    api('GET', `/api/agenda?from=${start}&to=${end}`),
-    api('GET', `/api/agenda?from=${addDays(today, -365)}&to=${addDays(today, 30)}`),
+    api('GET', `api/agenda?from=${start}&to=${end}`),
+    api('GET', `api/agenda?from=${addDays(today, -365)}&to=${addDays(today, 30)}`),
   ]);
   const late = around.filter((e) => e.date < today && !e.done && ['payments', 'vaccines', 'maintenance'].includes(e.module));
   const upcoming = around.filter((e) => e.date >= today);
@@ -367,7 +369,7 @@ async function viewPayments() {
   const [y, m] = ui.payMonth.split('-').map(Number);
   const first = iso(y, m - 1, 1);
   const last = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
-  const events = (await api('GET', `/api/agenda?from=${first}&to=${last}`)).filter((e) => e.module === 'payments');
+  const events = (await api('GET', `api/agenda?from=${first}&to=${last}`)).filter((e) => e.module === 'payments');
   const shift = (n) => {
     ui.payMonth = new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
     render();
@@ -431,7 +433,7 @@ function viewVaccines() {
       'Se agregan las vacunas del Calendario Nacional que falten, con la fecha según la edad.\n\n' +
       '¿Marcar como aplicadas las que ya deberían estar dadas? (Aceptar = sí, Cancelar = dejarlas pendientes)');
     try {
-      const added = await api('POST', '/api/vaccines/plan', { memberId: member.id, markPastApplied });
+      const added = await api('POST', 'api/vaccines/plan', { memberId: member.id, markPastApplied });
       await load(['vaccines']);
       render();
       if (!added.length) alert('Ya estaban todas cargadas.');
@@ -451,7 +453,7 @@ function viewVaccines() {
         class: 'small',
         onclick: async (e) => {
           e.stopPropagation();
-          await api('PUT', `/api/vaccines/${v.id}`, { appliedDate: today });
+          await api('PUT', `api/vaccines/${v.id}`, { appliedDate: today });
           await load(['vaccines']);
           render();
         },
@@ -509,8 +511,11 @@ function viewVehicles() {
 }
 
 async function viewFamily() {
-  const { feedPath } = await api('GET', '/api/settings');
-  const url = new URL(feedPath, location.href);
+  const { feedPath, directFeedUrl } = await api('GET', 'api/settings');
+  // Under a subpath (Home Assistant ingress) the page's own address needs a
+  // Home Assistant login, which a phone calendar cannot do: use the direct one
+  const proxied = location.pathname !== '/';
+  const url = new URL(proxied && directFeedUrl ? directFeedUrl : feedPath, document.baseURI);
   const webcal = `webcal://${url.host}${url.pathname}`;
   const input = el('input', { readonly: true, value: url.href, onclick: (e) => e.target.select(), 'aria-label': 'Dirección del calendario' });
   return [
@@ -529,14 +534,30 @@ async function viewFamily() {
       el('p', {}, 'Suscribite a este calendario desde el iPhone, la Mac o Google Calendar: vas a ver todos los turnos, vencimientos, vacunas y services con sus avisos, y se actualiza solo.'),
       el('div', { class: 'feed' },
         input,
-        el('button', { onclick: async () => { await navigator.clipboard?.writeText(url.href); input.select(); } }, 'Copiar'),
+        el('button', { onclick: () => copy(input) }, 'Copiar'),
         el('a', { class: 'btn primary', href: webcal }, 'Abrir en Calendario')),
       el('h3', {}, 'En el iPhone'),
       el('ol', { class: 'steps' },
         el('li', {}, 'Ajustes → Apps → Calendario → Cuentas → Agregar cuenta → Otra.'),
         el('li', {}, 'Elegí "Agregar calendario suscrito" y pegá la dirección.')),
-      el('p', { class: 'note' }, 'Funciona mientras el celular llegue a tu Umbrel (en tu casa, o desde afuera con Tailscale). Esta dirección no pide usuario: compartila solo con tu familia.')),
+      el('p', { class: 'note' }, 'Funciona mientras el celular llegue a tu Umbrel (en tu casa, o desde afuera con Tailscale). Esta dirección no pide usuario: compartila solo con tu familia.'),
+      proxied && !directFeedUrl
+        ? el('p', { class: 'note error' }, 'Estás viendo FamilySync a través de otro sitio (por ejemplo Home Assistant): esta dirección pasa por ese sitio y puede pedir login. Para suscribirte, abrí FamilySync directo desde tu Umbrel y copiala desde ahí.')
+        : null),
   ];
+}
+
+// The Clipboard API is blocked inside a cross-origin iframe (Home Assistant)
+// and logs an error there, so copy the selected text first and use it only as
+// a fallback
+async function copy(input) {
+  input.select();
+  if (document.execCommand('copy')) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+  } catch {
+    // Left selected for the user to copy by hand
+  }
 }
 
 function viewSoon(title, text) {
