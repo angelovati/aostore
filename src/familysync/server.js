@@ -10,6 +10,16 @@ const { isDate, addDays, addMonths, today } = require('./lib/dates');
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+// Direct address of the app (e.g. http://umbrel.local:3743/), for the calendar
+// feed link when the app is opened through a proxy such as Home Assistant ingress
+const FEED_BASE_URL = (() => {
+  try {
+    return process.env.FEED_BASE_URL ? new URL(process.env.FEED_BASE_URL.replace(/\/?$/, '/')).href : '';
+  } catch {
+    console.warn(`FEED_BASE_URL inválida, se ignora: ${process.env.FEED_BASE_URL}`);
+    return '';
+  }
+})();
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -51,7 +61,11 @@ function range(url) {
 // [method, pattern, handler(req, params, url)]
 const routes = [
   ['GET', /^\/api\/agenda$/, (req, p, url) => buildAgenda(store.data, range(url))],
-  ['GET', /^\/api\/settings$/, () => ({ feedPath: `/cal/${store.data.settings.feedToken}.ics` })],
+  // Relative path: the browser resolves it against wherever the app is served
+  ['GET', /^\/api\/settings$/, () => {
+    const feedPath = `cal/${store.data.settings.feedToken}.ics`;
+    return { feedPath, directFeedUrl: FEED_BASE_URL ? new URL(feedPath, FEED_BASE_URL).href : null };
+  }],
   // Marks one occurrence of a payment as paid or unpaid: { date, paid }
   ['POST', /^\/api\/payments\/([\w-]+)\/paid$/, async (req, [id]) => {
     const { date, paid } = await readBody(req);

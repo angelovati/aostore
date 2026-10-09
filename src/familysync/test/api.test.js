@@ -66,8 +66,9 @@ test('national vaccine schedule is added once', async () => {
 test('calendar feed needs the secret token', async () => {
   assert.strictEqual((await call('GET', '/cal/wrong.ics')).status, 404);
   const { body: settings } = await call('GET', '/api/settings');
-  assert.strictEqual(settings.feedPath, `/cal/${store.data.settings.feedToken}.ics`);
-  const feed = await call('GET', settings.feedPath);
+  assert.strictEqual(settings.feedPath, `cal/${store.data.settings.feedToken}.ics`);
+  assert.strictEqual(settings.directFeedUrl, null);
+  const feed = await call('GET', `/${settings.feedPath}`);
   assert.strictEqual(feed.status, 200);
   assert.match(feed.body, /SUMMARY:Alquiler/);
 });
