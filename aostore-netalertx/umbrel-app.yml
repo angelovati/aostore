@@ -1,0 +1,49 @@
+manifestVersion: 1
+id: aostore-netalertx
+category: networking
+name: NetAlertX
+version: "26.10.0"
+tagline: Find out who is on your network and get alerted about new devices
+icon: https://raw.githubusercontent.com/jokob-sk/NetAlertX/108320e625d53c495d6c27cc7f1f371605d78069/front/img/NetAlertX_logo.png
+description: >-
+  NetAlertX scans your local network and keeps an inventory of every device
+  connected to it. It tells you when a new or unknown device joins, when a
+  device goes offline, and when something changes, so you always know what is
+  on your network.
+
+
+  Features include:
+
+  - Device discovery with ARP scan, nmap, mDNS, NetBIOS and DHCP lease import
+
+  - Presence history and online/offline timelines for every device
+
+  - Alerts for new devices, disconnections and IP changes via email, Telegram,
+  Pushover, ntfy, webhooks, MQTT/Home Assistant and more
+
+  - Network topology view and device grouping
+
+  - Plugin system for routers, Pi-hole, AdGuard, UniFi and other integrations
+
+
+  The first scan runs a few minutes after the app starts. The scanned subnet
+  is detected automatically; you can change it under Settings → ARP-Scan.
+
+
+  NetAlertX uses host networking so it can see the devices on your local
+  network. Because of this, the app is not behind Umbrel's login page. To
+  protect it, set a password under Settings → UI → Password.
+releaseNotes: >-
+  Packaged from the official NetAlertX image 26.10.0.
+developer: jokob-sk
+website: https://netalertx.com
+dependencies: []
+repo: https://github.com/jokob-sk/NetAlertX
+support: https://github.com/jokob-sk/NetAlertX/issues
+port: 20211
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore

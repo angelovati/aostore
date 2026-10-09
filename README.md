@@ -14,6 +14,9 @@ Community app store for [umbrelOS](https://umbrel.com).
 |---|---|
 | [F1 Replay Timing](aostore-f1replaytiming) | Watch Formula 1 sessions with real timing data, live or as replays |
 | [Compras del Hogar](aostore-compras) | Compares supermarket prices and stock in Argentina and tells you where to buy each product |
+| [NetAlertX](aostore-netalertx) | Find out who is on your network and get alerted about new devices |
+| [OpenSpeedTest](aostore-openspeedtest) | Measure the network speed between your devices and your Umbrel |
+| [SmokePing](aostore-smokeping) | Keep track of your network latency |
 
 ## Adding an app
 

@@ -1,0 +1,31 @@
+manifestVersion: 1
+id: aostore-openspeedtest
+category: networking
+name: OpenSpeedTest
+version: "2.0.6"
+tagline: Measure the network speed between your devices and your Umbrel
+icon: https://raw.githubusercontent.com/openspeedtest/Docker-Image/fc86f9f4bd240fec5eb7670836e37252527afab7/files/www/assets/images/icons/android-chrome-512x512.png
+description: >-
+  OpenSpeedTest is a free, HTML5 network speed test that runs entirely in your
+  browser — no Flash, Java or app needed. Open it from any phone, tablet or
+  computer on your network to measure download, upload, ping and jitter
+  between that device and your Umbrel.
+
+
+  It is useful for checking Wi-Fi coverage, finding slow cables or switches,
+  and comparing wired and wireless performance on your home network. The test
+  measures your local network, not your internet connection.
+releaseNotes: >-
+  Packaged from the official OpenSpeedTest Docker image v2.0.6.
+developer: OpenSpeedTest
+website: https://openspeedtest.com
+dependencies: []
+repo: https://github.com/openspeedtest/Docker-Image
+support: https://github.com/openspeedtest/Docker-Image/issues
+port: 8463
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore

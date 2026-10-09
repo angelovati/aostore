@@ -1,0 +1,32 @@
+manifestVersion: 1
+id: aostore-smokeping
+category: networking
+name: SmokePing
+version: "2.9.0"
+tagline: Keep track of your network latency
+icon: https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/smokeping-logo.png
+description: >-
+  SmokePing measures latency, latency distribution and packet loss to the
+  hosts you choose, and draws them as long-term graphs. It is a simple way to
+  spot when your internet connection, your ISP or a remote service starts to
+  degrade, and to keep a history of it.
+
+
+  SmokePing comes with a set of example targets. To monitor your own hosts,
+  edit the Targets file in the app's data folder
+  (data/config/Targets) and restart the app. New graphs take a few minutes
+  to start filling in.
+releaseNotes: >-
+  Packaged from the LinuxServer.io SmokePing image 2.9.0-r0-ls186.
+developer: Tobi Oetiker
+website: https://oss.oetiker.ch/smokeping/
+dependencies: []
+repo: https://github.com/linuxserver/docker-smokeping
+support: https://github.com/linuxserver/docker-smokeping/issues
+port: 8462
+gallery: []
+path: "/smokeping/"
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore

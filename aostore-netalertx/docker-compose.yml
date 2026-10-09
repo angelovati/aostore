@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  web:
+    image: ghcr.io/jokob-sk/netalertx:26.10.0@sha256:f95bca7a794141296dd1d16be5bb7f39f6fdbcd20353cdb51eee696e12d317f6
+    # Host networking is required to scan the local network (ARP, nmap, mDNS).
+    # The UI listens on host port 20211 and the GraphQL API on 20212.
+    network_mode: host
+    restart: on-failure
+    stop_grace_period: 1m
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+    tmpfs:
+      - "/tmp:mode=1700,uid=0,gid=0,rw,noexec,nosuid,nodev,async,noatime,nodiratime"
+    environment:
+      PUID: 1000
+      PGID: 1000
+      LISTEN_ADDR: 0.0.0.0
+      PORT: 20211
+      GRAPHQL_PORT: 20212
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /etc/localtime:/etc/localtime:ro
