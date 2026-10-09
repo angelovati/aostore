@@ -76,6 +76,30 @@ node scripts/subpath-proxy.js http://127.0.0.1:3000 8099 /prueba/subpath/
 # http://127.0.0.1:8099/prueba/subpath/  y  http://127.0.0.1:8099/iframe.html
 ```
 
+## Calendario público para iCloud
+
+La Mac guarda las suscripciones en iCloud y las descargan los servidores de
+Apple, que no llegan a una IP privada (LAN o Tailscale). Para que funcione, el
+calendario tiene que estar en internet por HTTPS.
+
+El puerto `3745` (`FEED_PORT` dentro del contenedor) responde solo
+`GET`/`HEAD /cal/<token>.ics`; cualquier otra ruta da 404, así que publicarlo no
+expone el resto de la app.
+
+Con el add-on **Cloudflared** de Home Assistant, en su configuración:
+
+```yaml
+additional_hosts:
+  - hostname: familysync.tudominio.com
+    service: http://192.168.0.104:3745
+```
+
+Después, en FamilySync → Familia → **Dirección pública del calendario**,
+guardá `https://familysync.tudominio.com` y suscribite desde la Mac con
+Calendario → Archivo → Nueva suscripción a calendario, en iCloud. Cualquiera
+que tenga la dirección puede ver la agenda; si se filtra, **Cambiar dirección
+secreta** genera otra y la anterior deja de funcionar.
+
 ## API
 
 - `GET|POST /api/<colección>`, `PUT|DELETE /api/<colección>/<id>` para
@@ -85,8 +109,12 @@ node scripts/subpath-proxy.js http://127.0.0.1:3000 8099 /prueba/subpath/
 - `POST /api/payments/<id>/paid` `{ "date": "2026-10-10", "paid": true }`
 - `POST /api/vaccines/plan` `{ "memberId": "…", "markPastApplied": true }`:
   agrega las vacunas del calendario nacional que falten.
-- `GET /api/settings`: ruta relativa del feed de calendario y, si está
-  configurada, su dirección directa.
+- `GET /api/settings`: ruta relativa del feed de calendario, su dirección
+  directa (`FEED_BASE_URL`) y la pública, si están configuradas.
+- `PUT /api/settings` `{ "publicFeedBase": "https://…" }`: dirección pública
+  del calendario (vacío para borrarla).
+- `POST /api/settings/feed-token`: genera un token nuevo; el anterior deja de
+  funcionar.
 
 ## Desarrollo
 
@@ -96,5 +124,6 @@ npm start   # http://localhost:3000
 ```
 
 Variables: `PORT`, `DATA_DIR`, `TZ` (por defecto `America/Argentina/Buenos_Aires`)
-y `FEED_BASE_URL` (dirección directa de la app, por ejemplo
-`http://umbrel.local:3743/`).
+, `FEED_BASE_URL` (dirección directa de la app, por ejemplo
+`http://umbrel.local:3743/`) y `FEED_PORT` (puerto que solo sirve el
+calendario).

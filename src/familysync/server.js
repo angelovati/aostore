@@ -1,4 +1,5 @@
 const http = require('node:http');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { Store, SCHEMAS } = require('./lib/store');
@@ -8,6 +9,9 @@ const { planFor } = require('./lib/vaccines');
 const { isDate, addDays, addMonths, today } = require('./lib/dates');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
+// Second port that serves only the calendar feed, to publish on the internet
+// (e.g. with a Cloudflare Tunnel) without exposing the rest of the app
+const FEED_PORT = process.env.FEED_PORT ? parseInt(process.env.FEED_PORT, 10) : null;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 // Direct address of the app (e.g. http://umbrel.local:3743/), for the calendar
@@ -61,10 +65,19 @@ function range(url) {
 // [method, pattern, handler(req, params, url)]
 const routes = [
   ['GET', /^\/api\/agenda$/, (req, p, url) => buildAgenda(store.data, range(url))],
-  // Relative path: the browser resolves it against wherever the app is served
-  ['GET', /^\/api\/settings$/, () => {
-    const feedPath = `cal/${store.data.settings.feedToken}.ics`;
-    return { feedPath, directFeedUrl: FEED_BASE_URL ? new URL(feedPath, FEED_BASE_URL).href : null };
+  ['GET', /^\/api\/settings$/, () => settings()],
+  // Public address the feed is published at: { publicFeedBase: "https://…" or "" }
+  ['PUT', /^\/api\/settings$/, async (req) => {
+    const { publicFeedBase } = await readBody(req);
+    store.data.settings.publicFeedBase = normalizeBase(publicFeedBase);
+    store.save();
+    return settings();
+  }],
+  // New secret token: every existing subscription stops working
+  ['POST', /^\/api\/settings\/feed-token$/, () => {
+    store.data.settings.feedToken = crypto.randomBytes(18).toString('base64url');
+    store.save();
+    return settings();
   }],
   // Marks one occurrence of a payment as paid or unpaid: { date, paid }
   ['POST', /^\/api\/payments\/([\w-]+)\/paid$/, async (req, [id]) => {
@@ -88,6 +101,34 @@ const routes = [
     return { ok: true };
   }],
 ];
+
+// feedPath is relative: the browser resolves it against wherever the app is served
+function settings() {
+  const feedPath = `cal/${store.data.settings.feedToken}.ics`;
+  const base = store.data.settings.publicFeedBase;
+  return {
+    feedPath,
+    directFeedUrl: FEED_BASE_URL ? new URL(feedPath, FEED_BASE_URL).href : null,
+    publicFeedBase: base || '',
+    publicFeedUrl: base ? new URL(feedPath, base).href : null,
+  };
+}
+
+function normalizeBase(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    throw Object.assign(new Error('La dirección pública no es válida'), { status: 400 });
+  }
+  if (!/^https?:$/.test(url.protocol)) {
+    throw Object.assign(new Error('La dirección pública tiene que empezar con https://'), { status: 400 });
+  }
+  // Keep only the origin and path prefix; the feed path is added to it
+  return `${url.origin}${url.pathname.replace(/\/?$/, '/')}`;
+}
 
 // Logged so a failing calendar subscription can be traced in the app's logs
 function serveFeed(req, res, token) {
@@ -140,8 +181,19 @@ const server = http.createServer(async (req, res) => {
   serveStatic(res, url.pathname);
 });
 
+// Answers only GET/HEAD /cal/<token>.ics; anything else is a plain 404, so
+// publishing this port shows nothing of the app but the calendar
+const feedServer = http.createServer((req, res) => {
+  const url = new URL(req.url, 'http://localhost');
+  const feed = url.pathname.match(/^\/cal\/([\w-]+)\.ics$/);
+  if (feed && (req.method === 'GET' || req.method === 'HEAD')) return serveFeed(req, res, feed[1]);
+  res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('No encontrado');
+});
+
 if (require.main === module) {
   server.listen(PORT, () => console.log(`FamilySync escuchando en http://0.0.0.0:${PORT}`));
+  if (FEED_PORT) feedServer.listen(FEED_PORT, () => console.log(`Calendario público en http://0.0.0.0:${FEED_PORT}/cal/…`));
 }
 
-module.exports = { server, store, SCHEMAS };
+module.exports = { server, feedServer, store, SCHEMAS };

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: aostore-familysync
 category: files
 name: FamilySync
-version: "0.1.3"
+version: "0.1.4"
 tagline: La agenda de la familia, turnos médicos, pagos, vacunas y el auto en un solo lugar
 icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/src/familysync/public/icon.svg
 description: >-
@@ -30,8 +30,10 @@ description: >-
   Próximamente: lista de compras sincronizada con Recordatorios de iOS y
   calendario deportivo (Fórmula 1, Boca Juniors y la Selección Argentina).
 releaseNotes: >-
-  El calendario para suscribirse responde también a los pedidos HEAD que
-  algunas apps de calendario hacen antes de descargarlo.
+  Nuevo puerto 3745 que solo sirve el calendario, para publicarlo en internet
+  (por ejemplo con Cloudflare Tunnel) y que iCloud lo mantenga actualizado en
+  todos tus dispositivos. En Familia podés guardar la dirección pública y
+  cambiar la dirección secreta.
 developer: angelovati
 website: https://github.com/angelovati/aostore
 dependencies: []

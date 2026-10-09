@@ -10,11 +10,12 @@ services:
       PROXY_AUTH_WHITELIST: "/cal/*"
 
   web:
-    image: ghcr.io/angelovati/aostore-familysync:0.1.2
+    image: ghcr.io/angelovati/aostore-familysync:0.1.3
     restart: on-failure
     user: "1000:1000"
     environment:
       PORT: 3000
+      FEED_PORT: 3001
       DATA_DIR: /data
       TZ: America/Argentina/Buenos_Aires
       # Calendar feed link shown when the app is opened through a proxy such as
@@ -23,7 +24,11 @@ services:
     # Direct port for Home Assistant (hass_ingress), without the umbrelOS
     # login that app_proxy adds on 3743: HA requests the app from its server,
     # which has no Umbrel session. Anyone on the local network can open it.
+    # 3745 answers only /cal/<token>.ics (everything else is 404), to publish
+    # the calendar on the internet (e.g. with a Cloudflare Tunnel) so iCloud
+    # can fetch it
     ports:
       - "3744:3000"
+      - "3745:3001"
     volumes:
       - ${APP_DATA_DIR}/data:/data
