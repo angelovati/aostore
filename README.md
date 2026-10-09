@@ -13,6 +13,7 @@ Community app store for [umbrelOS](https://umbrel.com).
 | App | Description |
 |---|---|
 | [F1 Replay Timing](aostore-f1replaytiming) | Watch Formula 1 sessions with real timing data, live or as replays |
+| [FamilySync](aostore-familysync) | Family calendar for medical appointments, payments, vaccines and car maintenance |
 | [Compras del Hogar](aostore-compras) | Compares supermarket prices and stock in Argentina and tells you where to buy each product |
 | [NetAlertX](aostore-netalertx) | Find out who is on your network and get alerted about new devices |
 | [OpenSpeedTest](aostore-openspeedtest) | Measure the network speed between your devices and your Umbrel |
@@ -32,7 +33,8 @@ Pin images by version and digest, and pick a `port` that no other umbrelOS app u
 ## App source code
 
 Apps built in this repo keep their source under `src/<app>`. The
-`Compras image` workflow tests `src/compras` and publishes
-`ghcr.io/angelovati/aostore-compras` for amd64 and arm64 on every push to the default branch.
+`Compras image` and `FamilySync image` workflows test `src/compras` and
+`src/familysync` and publish `ghcr.io/angelovati/aostore-<app>` for amd64 and
+arm64 on every push to the default branch.
 After the first publish, make the package public in GitHub and pin its digest in
-`aostore-compras/docker-compose.yml`.
+`aostore-<app>/docker-compose.yml`.

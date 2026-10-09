@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3559c7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="FamilySync">
+  <title>FamilySync</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#inicio"><img src="icon.svg" alt="" width="32" height="32"> FamilySync</a>
+    <nav id="nav" aria-label="Secciones"></nav>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <dialog id="dialog">
+    <form id="form" method="dialog">
+      <h2 id="form-title"></h2>
+      <div id="form-fields"></div>
+      <p id="form-error" class="error" role="alert" hidden></p>
+      <div class="actions">
+        <button type="button" id="form-delete" class="danger" hidden>Borrar</button>
+        <span class="spacer"></span>
+        <button type="button" id="form-cancel">Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
