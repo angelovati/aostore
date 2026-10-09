@@ -511,13 +511,34 @@ function viewVehicles() {
 }
 
 async function viewFamily() {
-  const { feedPath, directFeedUrl } = await api('GET', 'api/settings');
+  const settings = await api('GET', 'api/settings');
   // Under a subpath (Home Assistant ingress) the page's own address needs a
   // Home Assistant login, which a phone calendar cannot do: use the direct one
   const proxied = location.pathname !== '/';
-  const url = new URL(proxied && directFeedUrl ? directFeedUrl : feedPath, document.baseURI);
+  // A public HTTPS address (Cloudflare) also works for iCloud, which fetches
+  // subscriptions from Apple's servers: prefer it when there is one
+  const href = settings.publicFeedUrl || (proxied && settings.directFeedUrl) || settings.feedPath;
+  const url = new URL(href, document.baseURI);
   const webcal = `webcal://${url.host}${url.pathname}`;
   const input = el('input', { readonly: true, value: url.href, onclick: (e) => e.target.select(), 'aria-label': 'Dirección del calendario' });
+
+  const baseInput = el('input', { type: 'url', value: settings.publicFeedBase, placeholder: 'https://familysync.tudominio.com', 'aria-label': 'Dirección pública' });
+  const baseError = el('p', { class: 'note error', hidden: true });
+  const saveBase = async () => {
+    try {
+      await api('PUT', 'api/settings', { publicFeedBase: baseInput.value });
+      render();
+    } catch (err) {
+      baseError.textContent = err.message;
+      baseError.hidden = false;
+    }
+  };
+  const newToken = async () => {
+    if (!confirm('Se genera una dirección nueva y las suscripciones actuales dejan de actualizarse: hay que volver a suscribirse en cada dispositivo. ¿Continuar?')) return;
+    await api('POST', 'api/settings/feed-token');
+    render();
+  };
+
   return [
     header('Familia', addButton('Agregar integrante', 'members')),
     el('section', { class: 'panel' },
@@ -536,14 +557,34 @@ async function viewFamily() {
         input,
         el('button', { onclick: () => copy(input) }, 'Copiar'),
         el('a', { class: 'btn primary', href: webcal }, 'Abrir en Calendario')),
-      el('h3', {}, 'En el iPhone'),
-      el('ol', { class: 'steps' },
-        el('li', {}, 'Ajustes → Apps → Calendario → Cuentas → Agregar cuenta → Otra.'),
-        el('li', {}, 'Elegí "Agregar calendario suscrito" y pegá la dirección.')),
-      el('p', { class: 'note' }, 'Funciona mientras el celular llegue a tu Umbrel (en tu casa, o desde afuera con Tailscale). Esta dirección no pide usuario: compartila solo con tu familia.'),
-      proxied && !directFeedUrl
-        ? el('p', { class: 'note error' }, 'Estás viendo FamilySync a través de otro sitio (por ejemplo Home Assistant): esta dirección pasa por ese sitio y puede pedir login. Para suscribirte, abrí FamilySync directo desde tu Umbrel y copiala desde ahí.')
-        : null),
+      settings.publicFeedUrl
+        ? [
+            el('h3', {}, 'En la Mac'),
+            el('p', {}, 'Calendario → Archivo → Nueva suscripción a calendario, pegá la dirección y elegí iCloud como ubicación: aparece sola en todos tus dispositivos.'),
+            el('h3', {}, 'En el iPhone'),
+            el('p', {}, 'Si ya está en iCloud desde la Mac, no hace falta nada. Si no: Ajustes → Apps → Calendario → Cuentas → Agregar cuenta → Otra → Agregar calendario suscrito.'),
+            el('p', { class: 'note' }, 'Esta dirección es pública: cualquiera que la tenga puede ver la agenda. Compartila solo con tu familia.'),
+          ]
+        : [
+            el('h3', {}, 'En el iPhone'),
+            el('ol', { class: 'steps' },
+              el('li', {}, 'Ajustes → Apps → Calendario → Cuentas → Agregar cuenta → Otra.'),
+              el('li', {}, 'Elegí "Agregar calendario suscrito" y pegá la dirección.')),
+            el('p', { class: 'note' }, 'Funciona mientras el celular llegue a tu Umbrel (en tu casa, o desde afuera con Tailscale). Esta dirección no pide usuario: compartila solo con tu familia.'),
+            el('p', { class: 'note' }, 'La Mac guarda las suscripciones en iCloud y las descargan los servidores de Apple, que no llegan a tu Umbrel: para eso configurá una dirección pública abajo.'),
+            proxied && !settings.directFeedUrl
+              ? el('p', { class: 'note error' }, 'Estás viendo FamilySync a través de otro sitio (por ejemplo Home Assistant): esta dirección pasa por ese sitio y puede pedir login. Para suscribirte, abrí FamilySync directo desde tu Umbrel y copiala desde ahí.')
+              : null,
+          ]),
+    el('section', { class: 'panel' },
+      el('h2', {}, 'Dirección pública del calendario'),
+      el('p', {}, 'Si publicaste el calendario en internet (por ejemplo con un túnel de Cloudflare al puerto 3745 de tu Umbrel, que solo muestra el calendario), escribí acá su dirección. Así iCloud puede actualizarlo en todos tus dispositivos.'),
+      el('div', { class: 'feed' },
+        baseInput,
+        el('button', { class: 'primary', onclick: saveBase }, 'Guardar')),
+      baseError,
+      el('p', { class: 'note' }, 'Si la dirección se filtra, generá una nueva: la anterior deja de funcionar.'),
+      el('button', { class: 'danger', onclick: newToken }, 'Cambiar dirección secreta')),
   ];
 }
 
