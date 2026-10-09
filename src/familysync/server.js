@@ -89,12 +89,22 @@ const routes = [
   }],
 ];
 
-function serveFeed(res, token) {
-  if (token !== store.data.settings.feedToken) return send(res, 404, { error: 'No encontrado' });
+// Logged so a failing calendar subscription can be traced in the app's logs
+function serveFeed(req, res, token) {
+  if (token !== store.data.settings.feedToken) {
+    console.log(`Feed: ${req.method} con token inválido (${req.headers['user-agent'] || 'sin user-agent'})`);
+    return send(res, 404, { error: 'No encontrado' });
+  }
   const now = today();
-  const events = buildAgenda(store.data, { from: addMonths(now, -12), to: addMonths(now, 24) });
-  res.writeHead(200, { 'Content-Type': 'text/calendar; charset=utf-8', 'Cache-Control': 'no-cache' });
-  res.end(toIcs(events));
+  const body = toIcs(buildAgenda(store.data, { from: addMonths(now, -12), to: addMonths(now, 24) }));
+  console.log(`Feed: ${req.method} 200 (${req.headers['user-agent'] || 'sin user-agent'})`);
+  // Node leaves the body out of HEAD responses, keeping the same headers
+  res.writeHead(200, {
+    'Content-Type': 'text/calendar; charset=utf-8',
+    'Content-Length': Buffer.byteLength(body),
+    'Cache-Control': 'no-cache',
+  });
+  res.end(body);
 }
 
 function serveStatic(res, pathname) {
@@ -110,7 +120,9 @@ function serveStatic(res, pathname) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const feed = url.pathname.match(/^\/cal\/([\w-]+)\.ics$/);
-  if (feed && req.method === 'GET') return serveFeed(res, feed[1]);
+  // Calendar apps may check the address with HEAD before reading it
+  const readOnly = req.method === 'GET' || req.method === 'HEAD';
+  if (feed && readOnly) return serveFeed(req, res, feed[1]);
 
   for (const [method, pattern, handler] of routes) {
     const m = url.pathname.match(pattern);
@@ -124,7 +136,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   if (url.pathname.startsWith('/api/')) return send(res, 404, { error: 'No encontrado' });
-  if (req.method !== 'GET') return send(res, 405, { error: 'Método no permitido' });
+  if (!readOnly) return send(res, 405, { error: 'Método no permitido' });
   serveStatic(res, url.pathname);
 });
 

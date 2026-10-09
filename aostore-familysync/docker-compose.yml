@@ -10,7 +10,7 @@ services:
       PROXY_AUTH_WHITELIST: "/cal/*"
 
   web:
-    image: ghcr.io/angelovati/aostore-familysync:0.1.1
+    image: ghcr.io/angelovati/aostore-familysync:0.1.2
     restart: on-failure
     user: "1000:1000"
     environment:
