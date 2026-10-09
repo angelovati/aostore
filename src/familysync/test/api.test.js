@@ -71,6 +71,12 @@ test('calendar feed needs the secret token', async () => {
   const feed = await call('GET', `/${settings.feedPath}`);
   assert.strictEqual(feed.status, 200);
   assert.match(feed.body, /SUMMARY:Alquiler/);
+  // Calendar apps may check the address with HEAD first
+  const head = await fetch(`${base}/${settings.feedPath}`, { method: 'HEAD' });
+  assert.strictEqual(head.status, 200);
+  assert.match(head.headers.get('content-type'), /text\/calendar/);
+  assert.strictEqual(Number(head.headers.get('content-length')), Buffer.byteLength(feed.body));
+  assert.strictEqual((await fetch(`${base}/`, { method: 'HEAD' })).status, 200);
 });
 
 test('static files cannot escape the public folder', async () => {
