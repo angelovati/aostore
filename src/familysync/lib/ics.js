@@ -8,6 +8,7 @@ const ALARMS = {
   appointments: { timed: ['-P1D', '-PT2H'], allDay: ['-PT15H'] },
   payments: { allDay: ['-P2DT15H', 'PT9H'] },
   vaccines: { allDay: ['-P6DT15H', 'PT9H'] },
+  school: { timed: ['-P1D', '-PT2H'], allDay: ['-PT15H'] },
   maintenance: { allDay: ['-P6DT15H'] },
   birthdays: { allDay: ['PT9H'] },
 };
@@ -60,7 +61,7 @@ function toIcs(events, { name = 'FamilySync', now = new Date() } = {}) {
       const start = `${compact(e.date)}T${e.time.replace(':', '')}00`;
       lines.push(`DTSTART:${start}`, 'DURATION:PT1H');
     } else {
-      lines.push(`DTSTART;VALUE=DATE:${compact(e.date)}`, `DTEND;VALUE=DATE:${compact(addDays(e.date, 1))}`, 'TRANSP:TRANSPARENT');
+      lines.push(`DTSTART;VALUE=DATE:${compact(e.date)}`, `DTEND;VALUE=DATE:${compact(addDays(e.endDate || e.date, 1))}`, 'TRANSP:TRANSPARENT');
     }
     lines.push(`SUMMARY:${escape(summary)}`, `CATEGORIES:${e.module}`);
     if (e.detail) lines.push(`DESCRIPTION:${escape(e.detail)}`);

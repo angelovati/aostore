@@ -8,6 +8,17 @@ const KIND_LABELS = {
   otro: 'Mantenimiento',
 };
 
+const SCHOOL_LABELS = {
+  acto: 'Acto',
+  reunion: 'Reunión',
+  examen: 'Examen',
+  entrega: 'Entrega',
+  salida: 'Salida',
+  'sin-clases': 'Sin clases',
+  vacaciones: 'Vacaciones',
+  otro: '',
+};
+
 // Due dates of a payment between from and to (inclusive). Monthly payments due
 // on the 31st fall on the last day of shorter months.
 function paymentDates(payment, from, to) {
@@ -115,6 +126,26 @@ function buildAgenda(data, { from, to }) {
       title: `${KIND_LABELS[r.kind] || 'Mantenimiento'}${v ? ` — ${v.name}` : ''}`,
       detail: r.nextKm ? `o a los ${r.nextKm.toLocaleString('es-AR')} km` : '',
       done,
+    });
+  }
+
+  for (const s of data.school || []) {
+    const end = s.endDate && s.endDate > s.date ? s.endDate : null;
+    // A multi-day event (winter holidays) shows while any of its days is in range
+    if (s.date > to || (end || s.date) < from) continue;
+    const m = members.get(s.memberId);
+    events.push({
+      uid: `school-${s.id}`,
+      module: 'school',
+      ref: s.id,
+      date: s.date,
+      endDate: end || undefined,
+      // Several days are all-day events; a single day keeps its time
+      time: end ? undefined : s.time,
+      title: `${s.title}${m ? ` — ${m.name}` : ''}`,
+      detail: [SCHOOL_LABELS[s.kind], s.place, s.notes].filter(Boolean).join(' · '),
+      memberId: s.memberId,
+      done: false,
     });
   }
 

@@ -29,3 +29,9 @@ test('long lines are folded at 75 octets', () => {
   for (const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line) <= 75, line);
   assert.match(ics.replace(/\r\n /g, ''), new RegExp(`SUMMARY:${'Ñ'.repeat(80)}`));
 });
+
+test('multi-day events end the day after their last day', () => {
+  const ics = toIcs([{ uid: 'school-x', module: 'school', date: '2026-07-13', endDate: '2026-07-24', title: 'Vacaciones de invierno', done: false }], { now });
+  assert.match(ics, /DTSTART;VALUE=DATE:20260713\r\nDTEND;VALUE=DATE:20260725/);
+  assert.match(ics, /TRIGGER:-PT15H/);
+});

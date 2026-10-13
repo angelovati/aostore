@@ -2,7 +2,7 @@ manifestVersion: 1
 id: aostore-familysync
 category: files
 name: FamilySync
-version: "0.1.4"
+version: "0.1.5"
 tagline: La agenda de la familia, turnos médicos, pagos, vacunas y el auto en un solo lugar
 icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/src/familysync/public/icon.svg
 description: >-
@@ -17,6 +17,9 @@ description: >-
   - Vacunas de los chicos: carga el Calendario Nacional de Vacunación según la
   fecha de nacimiento y avisa cuándo toca cada dosis.
 
+  - Eventos escolares: actos, reuniones de padres, exámenes, entregas,
+  salidas, días sin clases y vacaciones, de cada chico o de toda la familia.
+
   - Mantenimiento del auto: services, reparaciones, neumáticos y VTV, con
   kilometraje, costos y la fecha del próximo service.
 
@@ -30,10 +33,8 @@ description: >-
   Próximamente: lista de compras sincronizada con Recordatorios de iOS y
   calendario deportivo (Fórmula 1, Boca Juniors y la Selección Argentina).
 releaseNotes: >-
-  Nuevo puerto 3745 que solo sirve el calendario, para publicarlo en internet
-  (por ejemplo con Cloudflare Tunnel) y que iCloud lo mantenga actualizado en
-  todos tus dispositivos. En Familia podés guardar la dirección pública y
-  cambiar la dirección secreta.
+  Nuevo calendario de eventos escolares: actos, reuniones, exámenes, entregas,
+  salidas, días sin clases y vacaciones, también en el calendario del celular.
 developer: angelovati
 website: https://github.com/angelovati/aostore
 dependencies: []
