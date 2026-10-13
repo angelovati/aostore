@@ -13,6 +13,7 @@
   --c-appointments: #3b82f6;
   --c-payments: #e8890c;
   --c-vaccines: #2f9e44;
+  --c-school: #0c8599;
   --c-maintenance: #7b61c4;
   --c-birthdays: #d6409f;
 }
@@ -32,6 +33,7 @@
     --c-appointments: #60a5fa;
     --c-payments: #f5a524;
     --c-vaccines: #51cf66;
+    --c-school: #3bc9db;
     --c-maintenance: #a58cf0;
     --c-birthdays: #f06fbd;
   }
@@ -154,6 +156,7 @@ select, input, textarea {
 .m-appointments { background: var(--c-appointments); }
 .m-payments { background: var(--c-payments); }
 .m-vaccines { background: var(--c-vaccines); }
+.m-school { background: var(--c-school); }
 .m-maintenance { background: var(--c-maintenance); }
 .m-birthdays { background: var(--c-birthdays); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: .85rem; color: var(--muted); }

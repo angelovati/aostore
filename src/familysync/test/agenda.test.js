@@ -70,3 +70,18 @@ test('due dates before a payment was entered are not owed', () => {
   const done = buildAgenda(data, { from: '2026-09-01', to: '2026-11-30' }).map((e) => [e.date, e.done]);
   assert.deepStrictEqual(done, [['2026-09-01', true], ['2026-10-01', true], ['2026-11-01', false]]);
 });
+
+test('school events: whole family or one child, and several days', () => {
+  const data = { members: [{ id: 'm1', name: 'Sofi' }], vehicles: [], appointments: [], vaccines: [], maintenance: [], payments: [],
+    school: [
+      { id: 's1', memberId: 'm1', title: 'Acto 12 de Octubre', kind: 'acto', date: '2026-10-09', time: '10:00', place: 'Patio' },
+      { id: 's2', title: 'Vacaciones de invierno', kind: 'vacaciones', date: '2026-07-13', endDate: '2026-07-24', time: '08:00' },
+      { id: 's3', title: 'Fuera de rango', kind: 'otro', date: '2026-12-01' },
+    ] };
+  const october = buildAgenda(data, { from: '2026-10-01', to: '2026-10-31' });
+  assert.deepStrictEqual(october.map((e) => [e.module, e.title, e.time, e.detail]), [['school', 'Acto 12 de Octubre — Sofi', '10:00', 'Acto · Patio']]);
+  // A range that starts in the middle of the holidays still includes them, as an all-day event
+  const [holidays] = buildAgenda(data, { from: '2026-07-20', to: '2026-07-31' });
+  assert.deepStrictEqual([holidays.date, holidays.endDate, holidays.time, holidays.title], ['2026-07-13', '2026-07-24', undefined, 'Vacaciones de invierno']);
+  assert.strictEqual(buildAgenda(data, { from: '2026-07-25', to: '2026-07-31' }).length, 0);
+});

@@ -60,9 +60,9 @@ function relative(s) {
 }
 
 // ---------- data ----------
-const COLLECTIONS = ['members', 'appointments', 'payments', 'vehicles', 'maintenance', 'vaccines'];
+const COLLECTIONS = ['members', 'appointments', 'payments', 'vehicles', 'maintenance', 'vaccines', 'school'];
 const db = Object.fromEntries(COLLECTIONS.map((c) => [c, []]));
-const ui = { month: todayIso().slice(0, 7), selectedDay: null, payMonth: todayIso().slice(0, 7), memberFilter: '', vaccineMember: '' };
+const ui = { month: todayIso().slice(0, 7), selectedDay: null, payMonth: todayIso().slice(0, 7), memberFilter: '', vaccineMember: '', schoolMember: '' };
 
 async function load(names = COLLECTIONS) {
   const lists = await Promise.all(names.map((n) => api('GET', `api/${n}`)));
@@ -75,6 +75,7 @@ const MODULES = {
   appointments: 'Turnos médicos',
   payments: 'Pagos',
   vaccines: 'Vacunas',
+  school: 'Escuela',
   maintenance: 'Vehículos',
   birthdays: 'Cumpleaños',
 };
@@ -85,6 +86,7 @@ const LABELS = {
   status: { pendiente: 'Pendiente', realizado: 'Realizado', cancelado: 'Cancelado' },
   kind: { service: 'Service', reparacion: 'Reparación', neumaticos: 'Neumáticos', vtv: 'VTV', otro: 'Otro' },
   currency: { ARS: 'Pesos', USD: 'Dólares' },
+  schoolKind: { acto: 'Acto', reunion: 'Reunión de padres', examen: 'Examen / prueba', entrega: 'Entrega de trabajo', salida: 'Salida / excursión', 'sin-clases': 'Sin clases / feriado', vacaciones: 'Vacaciones', otro: 'Otro' },
 };
 const options = (key) => Object.entries(LABELS[key]).map(([value, label]) => ({ value, label }));
 const refOptions = (name) => () => db[name].map((x) => ({ value: x.id, label: x.name }));
@@ -149,6 +151,19 @@ const FORMS = {
       { name: 'nextKm', label: 'Próxima visita (km)', type: 'number' },
     ],
   },
+  school: {
+    title: 'evento escolar',
+    fields: [
+      { name: 'title', label: 'Evento', required: true, wide: true, list: ['Acto 25 de Mayo', 'Acto 20 de Junio', 'Acto 9 de Julio', 'Acto 17 de Agosto', 'Acto 11 de Septiembre', 'Reunión de padres', 'Entrega de boletines', 'Muestra anual', 'Fiesta de fin de año', 'Inicio de clases', 'Fin de clases', 'Vacaciones de invierno'] },
+      { name: 'kind', label: 'Tipo', type: 'select', options: () => options('schoolKind'), required: true },
+      { name: 'memberId', label: 'Para', type: 'select', options: refOptions('members'), empty: 'Toda la familia' },
+      { name: 'date', label: 'Fecha', type: 'date', required: true },
+      { name: 'endDate', label: 'Hasta (si dura varios días)', type: 'date' },
+      { name: 'time', label: 'Hora', type: 'time' },
+      { name: 'place', label: 'Lugar' },
+      { name: 'notes', label: 'Notas (qué llevar, vestimenta…)', type: 'textarea' },
+    ],
+  },
   vaccines: {
     title: 'vacuna',
     fields: [
@@ -169,7 +184,7 @@ function fieldInput(f, value) {
   if (f.type === 'select') {
     const opts = f.options();
     input = el('select', { id, name: f.name, required: f.required },
-      f.required ? null : el('option', { value: '' }, '—'),
+      f.required ? null : el('option', { value: '' }, f.empty || '—'),
       opts.map((o) => el('option', { value: o.value, selected: o.value === value }, o.label)));
   } else if (f.type === 'textarea') {
     input = el('textarea', { id, name: f.name, rows: 2 });
@@ -271,7 +286,10 @@ function eventItem(e, { showDate = true } = {}) {
     el('span', { class: `dot m-${e.module}`, title: MODULES[e.module] }),
     el('div', {},
       el('button', { class: 'title', onclick: () => openEvent(e) }, e.title),
-      el('div', { class: 'when' }, [showDate ? `${fmtDate(e.date)} (${relative(e.date)})` : '', e.time ? ` · ${e.time} h` : ''].join('')),
+      el('div', { class: 'when' }, [
+        showDate ? (e.endDate ? `del ${fmtDate(e.date)} al ${fmtDate(e.endDate)}` : `${fmtDate(e.date)} (${relative(e.date)})`) : '',
+        e.time ? ` · ${e.time} h` : '',
+      ].join('')),
       e.detail ? el('div', { class: 'detail' }, e.detail) : null),
     el('div', { class: 'right' },
       e.amount != null ? el('span', { class: 'amount' }, money(e.amount, e.currency)) : null,
@@ -295,10 +313,13 @@ async function viewHome() {
     api('GET', `api/agenda?from=${addDays(today, -365)}&to=${addDays(today, 30)}`),
   ]);
   const late = around.filter((e) => e.date < today && !e.done && ['payments', 'vaccines', 'maintenance'].includes(e.module));
-  const upcoming = around.filter((e) => e.date >= today);
+  const upcoming = around.filter((e) => (e.endDate || e.date) >= today);
 
   const byDay = new Map();
-  for (const e of monthEvents) byDay.set(e.date, [...(byDay.get(e.date) || []), e]);
+  for (const e of monthEvents) {
+    // Multi-day events (school holidays) appear on each of their days
+    for (let d = e.date; d <= (e.endDate || e.date); d = addDays(d, 1)) byDay.set(d, [...(byDay.get(d) || []), e]);
+  }
 
   const shift = (n) => {
     const d = new Date(Date.UTC(y, m - 1 + n, 1));
@@ -362,6 +383,31 @@ function viewAppointments() {
     db.members.length ? null : needsMembers(),
     el('section', { class: 'panel' }, el('h2', {}, 'Próximos'), eventList(upcoming.map(toEvent), 'No hay turnos pendientes.')),
     el('section', { class: 'panel' }, el('h2', {}, 'Anteriores'), eventList(past.map(toEvent), 'Todavía no hay historial.')),
+  ];
+}
+
+function viewSchool() {
+  const today = todayIso();
+  // A child's events plus the ones for the whole family
+  const list = db.school
+    .filter((s) => !ui.schoolMember || !s.memberId || s.memberId === ui.schoolMember)
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const upcoming = list.filter((s) => (s.endDate || s.date) >= today);
+  const past = list.filter((s) => !upcoming.includes(s)).reverse();
+  const toEvent = (s) => ({
+    module: 'school', ref: s.id, date: s.date, endDate: s.endDate > s.date ? s.endDate : undefined, time: s.time,
+    title: `${s.title}${s.memberId ? ` — ${memberName(s.memberId)}` : ''}`,
+    detail: [LABELS.schoolKind[s.kind], s.place, s.notes].filter(Boolean).join(' · '),
+  });
+  const filter = el('select', { onchange: (e) => { ui.schoolMember = e.target.value; render(); }, 'aria-label': 'Filtrar por integrante' },
+    el('option', { value: '' }, 'Toda la familia'),
+    db.members.map((m) => el('option', { value: m.id, selected: m.id === ui.schoolMember }, m.name)));
+  return [
+    header('Eventos escolares', db.members.length ? filter : null,
+      addButton('Nuevo evento', 'school', () => ({ memberId: ui.schoolMember, date: today, kind: 'acto' }))),
+    el('section', { class: 'panel' }, el('h2', {}, 'Próximos'),
+      eventList(upcoming.map(toEvent), 'No hay eventos escolares próximos. Cargá actos, reuniones, exámenes, salidas o vacaciones.')),
+    el('section', { class: 'panel' }, el('h2', {}, 'Anteriores'), eventList(past.map(toEvent), 'Todavía no hay eventos pasados.')),
   ];
 }
 
@@ -552,7 +598,7 @@ async function viewFamily() {
         : el('p', { class: 'empty' }, 'Agregá a cada integrante de la familia: se usan en turnos médicos y vacunas.')),
     el('section', { class: 'panel' },
       el('h2', {}, 'Recordatorios en el celular'),
-      el('p', {}, 'Suscribite a este calendario desde el iPhone, la Mac o Google Calendar: vas a ver todos los turnos, vencimientos, vacunas y services con sus avisos, y se actualiza solo.'),
+      el('p', {}, 'Suscribite a este calendario desde el iPhone, la Mac o Google Calendar: vas a ver todos los turnos, vencimientos, vacunas, eventos escolares y services con sus avisos, y se actualiza solo.'),
       el('div', { class: 'feed' },
         input,
         el('button', { onclick: () => copy(input) }, 'Copiar'),
@@ -610,6 +656,7 @@ const VIEWS = {
   turnos: { label: 'Turnos médicos', render: viewAppointments },
   pagos: { label: 'Pagos', render: viewPayments },
   vacunas: { label: 'Vacunas', render: viewVaccines },
+  escuela: { label: 'Escuela', render: viewSchool },
   vehiculos: { label: 'Vehículos', render: viewVehicles },
   compras: { label: 'Compras', soon: true, render: () => viewSoon('Lista de compras', 'La lista de compras se va a sincronizar con una lista de Recordatorios de iOS, para que cualquiera de la familia la complete desde el iPhone.') },
   deportes: { label: 'Deportes', soon: true, render: () => viewSoon('Calendario deportivo', 'Carreras de Fórmula 1 y partidos de Boca Juniors y de la Selección Argentina, con el horario de Argentina.') },

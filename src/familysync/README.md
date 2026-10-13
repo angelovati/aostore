@@ -11,6 +11,7 @@ desde el iPhone, la Mac o Google Calendar.
 | Turnos médicos | ✅ |
 | Pagos y vencimientos (únicos, mensuales o anuales) | ✅ |
 | Vacunas, con el Calendario Nacional de Vacunación como plantilla | ✅ |
+| Eventos escolares (de un chico o de toda la familia, de uno o varios días) | ✅ |
 | Mantenimiento de vehículos | ✅ |
 | Lista de compras sincronizada con Recordatorios de iOS | Próximamente |
 | Calendario deportivo (F1, Boca Juniors, Selección Argentina) | Próximamente |
@@ -103,7 +104,8 @@ secreta** genera otra y la anterior deja de funcionar.
 ## API
 
 - `GET|POST /api/<colección>`, `PUT|DELETE /api/<colección>/<id>` para
-  `members`, `appointments`, `payments`, `vehicles`, `maintenance` y `vaccines`
+  `members`, `appointments`, `payments`, `vehicles`, `maintenance`, `vaccines` y
+  `school`
   (`PUT` actualiza solo los campos enviados).
 - `GET /api/agenda?from=AAAA-MM-DD&to=AAAA-MM-DD`: eventos de todos los módulos.
 - `POST /api/payments/<id>/paid` `{ "date": "2026-10-10", "paid": true }`

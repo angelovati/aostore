@@ -49,6 +49,17 @@ const SCHEMAS = {
     nextDate: { type: 'date' },
     nextKm: { type: 'number' },
   },
+  // Events for one child (memberId) or the whole family; endDate for several days
+  school: {
+    memberId: { type: 'ref', ref: 'members' },
+    title: { type: 'string', required: true },
+    kind: { type: 'enum', values: ['acto', 'reunion', 'examen', 'entrega', 'salida', 'sin-clases', 'vacaciones', 'otro'], default: 'otro' },
+    date: { type: 'date', required: true },
+    endDate: { type: 'date' },
+    time: { type: 'time' },
+    place: { type: 'string' },
+    notes: { type: 'string' },
+  },
   vaccines: {
     memberId: { type: 'ref', ref: 'members', required: true },
     name: { type: 'string', required: true },
@@ -154,6 +165,7 @@ class Store {
       }
       out[field] = value;
     }
+    if (out.endDate && out.date && out.endDate < out.date) throw badRequest('"endDate" no puede ser anterior a "date"');
     return out;
   }
 

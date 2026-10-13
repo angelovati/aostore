@@ -79,6 +79,17 @@ test('calendar feed needs the secret token', async () => {
   assert.strictEqual((await fetch(`${base}/`, { method: 'HEAD' })).status, 200);
 });
 
+test('school events validate their dates and member', async () => {
+  const family = await call('POST', '/api/school', { title: 'Reunión de padres', kind: 'reunion', date: '2026-10-20', time: '18:30' });
+  assert.strictEqual(family.status, 200);
+  assert.strictEqual(family.body.memberId, undefined);
+  assert.strictEqual((await call('POST', '/api/school', { title: 'Mal', date: '2026-07-24', endDate: '2026-07-13' })).status, 400);
+  assert.strictEqual((await call('POST', '/api/school', { title: 'Mal', date: '2026-07-24', memberId: 'nadie' })).status, 400);
+  assert.strictEqual((await call('POST', '/api/school', { date: '2026-07-24' })).status, 400);
+  const { body: events } = await call('GET', '/api/agenda?from=2026-10-20&to=2026-10-20');
+  assert.ok(events.some((e) => e.module === 'school' && e.title === 'Reunión de padres' && e.time === '18:30'));
+});
+
 test('static files cannot escape the public folder', async () => {
   assert.strictEqual((await call('GET', '/')).status, 200);
   assert.strictEqual((await call('GET', '/..%2fserver.js')).status, 404);
