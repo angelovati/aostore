@@ -1,0 +1,40 @@
+manifestVersion: 1
+id: aostore-microsocks
+category: networking
+name: microsocks
+version: "1.0.5"
+tagline: Proxy SOCKS5 liviano para usar Spotify y otras apps desde tu red local
+icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/aostore-microsocks/www/icon.svg
+description: >-
+  microsocks es un servidor proxy SOCKS5 mínimo: un binario de pocos kilobytes
+  que casi no usa memoria ni CPU, ideal para una Raspberry Pi.
+
+
+  La app publica el proxy en el puerto 1080 de tu Umbrel para que cualquier
+  dispositivo de tu red local pueda salir a internet a través de él. Sirve,
+  por ejemplo, para seguir usando Spotify mientras la computadora está
+  conectada a la VPN del trabajo: en Spotify, en Configuración > Proxy, elegí
+  SOCKS5 y poné la IP de tu Umbrel con el puerto 1080.
+
+
+  La página de la app solo muestra los datos de conexión y cómo configurar
+  Spotify.
+
+
+  El proxy no tiene usuario ni contraseña: cualquiera que llegue al puerto
+  1080 puede usarlo. Usalo solo dentro de tu red local y no abras ese puerto
+  hacia internet en el router.
+releaseNotes: >-
+  Primera versión, con microsocks 1.0.5.
+developer: rofl0r
+website: https://github.com/rofl0r/microsocks
+dependencies: []
+repo: https://github.com/angelovati/aostore/tree/HEAD/src/microsocks
+support: https://github.com/angelovati/aostore/issues
+port: 10801
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore

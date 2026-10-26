@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>microsocks</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #f6f7f9; --card: #fff; --fg: #1d2330; --muted: #5b6475; --accent: #1db954; --code: #eef1f5; --border: #dde2ea; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #11141a; --card: #1a1f27; --fg: #e8ebf0; --muted: #9aa3b2; --code: #252b35; --border: #2c333e; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 16px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+    h1 img { width: 36px; height: 36px; }
+    h2 { font-size: 1.1rem; margin: 0 0 10px; }
+    p { margin: 8px 0; }
+    .muted { color: var(--muted); }
+    .endpoint { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
+    code { background: var(--code); border-radius: 6px; padding: 2px 6px; font: 0.95em ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .endpoint code { font-size: 1.25rem; padding: 6px 12px; }
+    button { border: 0; border-radius: 8px; padding: 8px 14px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
+    ol { padding-left: 1.3em; margin: 8px 0; }
+    li { margin: 4px 0; }
+    .warn { border-left: 4px solid #e5a50a; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1><img src="icon.svg" alt="">microsocks</h1>
+    <p class="muted">Proxy SOCKS5 activo en tu Umbrel.</p>
+    <div class="endpoint">
+      <code id="endpoint">&lt;IP de tu Umbrel&gt;:1080</code>
+      <button id="copy" type="button">Copiar</button>
+    </div>
+    <p class="muted" id="hint">Tipo SOCKS5, sin usuario ni contraseña.</p>
+  </div>
+
+  <div class="card">
+    <h2>Configurar Spotify (escritorio)</h2>
+    <ol>
+      <li>Abrí Spotify y andá a <b>Configuración</b>.</li>
+      <li>En la sección <b>Proxy</b>, elegí <b>Tipo de proxy: SOCKS5</b>.</li>
+      <li><b>Host:</b> <code id="host">&lt;IP de tu Umbrel&gt;</code> &nbsp; <b>Puerto:</b> <code>1080</code></li>
+      <li>Dejá vacíos usuario y contraseña.</li>
+      <li>Tocá <b>Reiniciar app</b> para aplicar el cambio.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Con la VPN del trabajo</h2>
+    <p>El proxy solo sirve si la VPN deja pasar el tráfico hacia tu red local (por ejemplo, con la opción "permitir acceso a la red local" o con split tunneling). Si con la VPN conectada no podés abrir esta página, Spotify tampoco va a llegar al proxy.</p>
+  </div>
+
+  <div class="card warn">
+    <h2>Importante</h2>
+    <p>El proxy no pide contraseña: cualquier dispositivo que llegue al puerto 1080 puede usarlo. No abras ese puerto hacia Internet en tu router.</p>
+  </div>
+</main>
+<script>
+  (function () {
+    var h = location.hostname;
+    if (!h) return;
+    var isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(h);
+    document.getElementById('endpoint').textContent = h + ':1080';
+    document.getElementById('host').textContent = h;
+    if (!isIp) {
+      document.getElementById('hint').textContent =
+        'Tipo SOCKS5, sin usuario ni contraseña. Si "' + h + '" no funciona en Spotify, usá la IP de tu Umbrel (la ves en la configuración de umbrelOS o en tu router).';
+    }
+    document.getElementById('copy').addEventListener('click', function () {
+      var text = document.getElementById('endpoint').textContent;
+      var btn = this;
+      var done = function () { btn.textContent = 'Copiado'; setTimeout(function () { btn.textContent = 'Copiar'; }, 1500); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done);
+      } else {
+        var t = document.createElement('textarea');
+        t.value = text; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(t);
+      }
+    });
+  })();
+</script>
+</body>
+</html>

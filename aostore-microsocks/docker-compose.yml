@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: aostore-microsocks_web_1
+      APP_PORT: 8080
+      # The page only shows how to connect to the proxy
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: busybox:1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+    restart: on-failure
+    user: "1000:1000"
+    command: ["httpd", "-f", "-p", "8080", "-h", "/www"]
+    volumes:
+      - ${APP_DATA_DIR}/www:/www:ro
+
+  microsocks:
+    # TODO: replace COMPLETAR_DIGEST with the digest printed in the summary of
+    # the "microsocks image" workflow after the first publish
+    image: ghcr.io/angelovati/aostore-microsocks:1.0.5@sha256:COMPLETAR_DIGEST
+    restart: on-failure
+    # SOCKS5 is not HTTP, so it is published on the host instead of going
+    # through app_proxy. No authentication: anyone on the local network can use it
+    ports:
+      - "1080:1080"
