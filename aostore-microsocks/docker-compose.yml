@@ -17,9 +17,7 @@ services:
       - ${APP_DATA_DIR}/www:/www:ro
 
   microsocks:
-    # TODO: replace COMPLETAR_DIGEST with the digest printed in the summary of
-    # the "microsocks image" workflow after the first publish
-    image: ghcr.io/angelovati/aostore-microsocks:1.0.5@sha256:COMPLETAR_DIGEST
+    image: ghcr.io/angelovati/aostore-microsocks:1.0.5@sha256:b942efa07ac0395448b05b994baf36b7e7df0402b6f85b7c90eca320eb277c12
     restart: on-failure
     # SOCKS5 is not HTTP, so it is published on the host instead of going
     # through app_proxy. No authentication: anyone on the local network can use it
