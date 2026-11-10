@@ -63,10 +63,10 @@ function safeEqual(a, b) {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 
-export function createApp({ dataDir = DATA_DIR, makeSocket, autoStart = true } = {}) {
+export function createApp({ dataDir = DATA_DIR, makeSocket, fetchVersion, autoStart = true } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
   const db = new Db(path.join(dataDir, 'wabridge.db'));
-  const wa = new WhatsApp({ db, authDir: path.join(dataDir, 'auth'), makeSocket });
+  const wa = new WhatsApp({ db, authDir: path.join(dataDir, 'auth'), makeSocket, fetchVersion });
 
   const DEFAULTS = { mcpToken: null, mcpReadOnly: false, webhookUrl: '', webhookSecret: '', webhookGroups: true };
   const settings = () => ({ ...DEFAULTS, ...db.getKv('settings', {}) });

@@ -14,7 +14,7 @@ import { createFakeSocketFactory, incoming } from './fake-socket.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fake = createFakeSocketFactory();
-const app = createApp({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'wabridge-')), makeSocket: fake.makeSocket });
+const app = createApp({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'wabridge-')), makeSocket: fake.makeSocket, fetchVersion: async () => ({ version: [2, 3000, 1111], isLatest: true }) });
 let base;
 let mcpBase;
 let client;

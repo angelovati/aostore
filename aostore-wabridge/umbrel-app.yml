@@ -2,7 +2,7 @@ manifestVersion: 1
 id: aostore-wabridge
 category: social
 name: WaBridge
-version: "0.1.0"
+version: "0.1.1"
 tagline: Tu WhatsApp en el Umbrel, con acceso para Claude por MCP
 icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/src/wabridge/public/icon.svg
 description: >-
@@ -40,7 +40,10 @@ description: >-
   a través de la librería Baileys. Usarlo para enviar spam o mensajes masivos
   puede hacer que WhatsApp bloquee tu número.
 releaseNotes: >-
-  Primera versión.
+  Arregla el código QR que nunca aparecía: la app ahora usa la versión actual
+  de WhatsApp Web (WhatsApp rechazaba la conexión con la versión vieja) y
+  muestra en pantalla por qué no se puede conectar. Aclara que el código para
+  vincular con el número aparece en la app, no por SMS.
 developer: angelovati
 website: https://github.com/angelovati/aostore
 dependencies: []

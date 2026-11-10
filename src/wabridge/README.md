@@ -14,6 +14,16 @@ Abrí la app en umbrelOS y escaneá el QR desde el teléfono, en
 puede vincular con el número de teléfono: la app muestra un código de 8
 caracteres para ingresar en el teléfono.
 
+El código de vinculación no llega por SMS: aparece en la app y se ingresa en
+el teléfono en *Dispositivos vinculados → Vincular un dispositivo → Vincular
+con el número de teléfono*.
+
+Si el QR no aparece, la pantalla muestra por qué WhatsApp cerró la conexión.
+WhatsApp rechaza (error 405) a los clientes que anuncian una versión vieja de
+WhatsApp Web, así que al conectar la app lee la versión actual de
+`web.whatsapp.com` y recuerda la última que funcionó. Con `WA_VERSION`
+(por ejemplo `2.3000.1234567890`) se puede forzar una.
+
 Después de vincular, el teléfono envía el historial reciente; los chats van
 apareciendo a medida que llega. La sesión queda guardada en `DATA_DIR/auth` y
 los mensajes en `DATA_DIR/wabridge.db` (SQLite). Si el dispositivo se quita
@@ -149,7 +159,7 @@ channel.
 
 Variables: `PORT` (3000), `MCP_PORT` (sin definir: no abre el segundo puerto),
 `MCP_PUBLIC_PORT` (puerto publicado en el host, para la dirección que muestra
-Ajustes), `DATA_DIR`, `TZ`, `BAILEYS_LOG_LEVEL` (`warn`).
+Ajustes), `DATA_DIR`, `TZ`, `BAILEYS_LOG_LEVEL` (`warn`), `WA_VERSION`.
 
 ## Aviso
 
