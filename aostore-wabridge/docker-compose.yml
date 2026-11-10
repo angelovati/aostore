@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: aostore-wabridge_web_1
+      APP_PORT: 3000
+      # MCP clients (Claude) cannot log in to umbrelOS; these paths are
+      # protected by the secret token in their URL instead.
+      PROXY_AUTH_WHITELIST: "/mcp/*,/channel/*"
+
+  web:
+    image: ghcr.io/angelovati/aostore-wabridge:0.1.0
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 15s
+    environment:
+      PORT: 3000
+      MCP_PORT: 3001
+      MCP_PUBLIC_PORT: 3751
+      DATA_DIR: /data
+      TZ: America/Argentina/Buenos_Aires
+    # 3751 answers only /mcp/<token> and /channel/<token>/… (everything else is
+    # 404), for Claude Code / Claude Desktop on the local network and to
+    # publish the MCP server on the internet with a tunnel for claude.ai
+    ports:
+      - "3751:3001"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
