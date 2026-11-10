@@ -1,0 +1,55 @@
+manifestVersion: 1
+id: aostore-wabridge
+category: social
+name: WaBridge
+version: "0.1.0"
+tagline: Tu WhatsApp en el Umbrel, con acceso para Claude por MCP
+icon: https://raw.githubusercontent.com/angelovati/aostore/HEAD/src/wabridge/public/icon.svg
+description: >-
+  WaBridge es un cliente de WhatsApp Web que corre en tu Umbrel. Se vincula a
+  tu cuenta como un dispositivo más (escaneando el código QR desde
+  WhatsApp > Dispositivos vinculados, o con un código de 8 letras) y guarda
+  tus chats para que los puedas leer y contestar desde el navegador.
+
+
+  - Lista de chats y grupos con mensajes sin leer, búsqueda y conversaciones
+  con fotos, audios, videos, documentos, respuestas citadas y reacciones.
+
+  - Enviar mensajes, archivos y reacciones, y marcar chats como leídos.
+
+  - Servidor MCP para que Claude (Claude Code, Claude Desktop o claude.ai)
+  lea y busque tus mensajes, envíe mensajes, reaccione y espere mensajes
+  nuevos para responder.
+
+  - Canal para Claude Code: cada mensaje que recibís le llega a Claude en
+  la sesión abierta, que puede contestar solo.
+
+  - Webhook: cada mensaje recibido se envía a la dirección que elijas
+  (n8n, Home Assistant…), firmado con HMAC.
+
+  - Modo solo lectura para que Claude no pueda enviar nada.
+
+
+  El servidor MCP también escucha en el puerto 3751, sin el login de
+  umbrelOS: lo protege un token secreto en la dirección, que se ve en
+  Ajustes. Quien tenga esa dirección puede leer y enviar mensajes desde tu
+  cuenta, así que no la compartas.
+
+
+  WaBridge no es una app oficial de WhatsApp: usa el protocolo de WhatsApp Web
+  a través de la librería Baileys. Usarlo para enviar spam o mensajes masivos
+  puede hacer que WhatsApp bloquee tu número.
+releaseNotes: >-
+  Primera versión.
+developer: angelovati
+website: https://github.com/angelovati/aostore
+dependencies: []
+repo: https://github.com/angelovati/aostore/tree/HEAD/src/wabridge
+support: https://github.com/angelovati/aostore/issues
+port: 3750
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: angelovati
+submission: https://github.com/angelovati/aostore

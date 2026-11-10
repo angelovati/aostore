@@ -1,0 +1,23 @@
+{
+  "name": "aostore-wabridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cliente de WhatsApp Web para umbrelOS con servidor MCP para Claude",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "baileys": "7.0.0-rc14",
+    "pino": "^9.6.0",
+    "qrcode": "1.5.4",
+    "zod": "^4.0.0"
+  }
+}

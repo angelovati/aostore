@@ -19,6 +19,7 @@ Community app store for [umbrelOS](https://umbrel.com).
 | [NetAlertX](aostore-netalertx) | Find out who is on your network and get alerted about new devices |
 | [OpenSpeedTest](aostore-openspeedtest) | Measure the network speed between your devices and your Umbrel |
 | [SmokePing](aostore-smokeping) | Keep track of your network latency |
+| [WaBridge](aostore-wabridge) | WhatsApp Web client with an MCP server so Claude can read, send and react to your messages |
 
 ## Adding an app
 
@@ -34,8 +35,8 @@ Pin images by version and digest, and pick a `port` that no other umbrelOS app u
 ## App source code
 
 Apps built in this repo keep their source under `src/<app>`. The
-`Compras image`, `FamilySync image` and `microsocks image` workflows test
-`src/compras`, `src/familysync` and `src/microsocks` and publish `ghcr.io/angelovati/aostore-<app>` for amd64 and
+`Compras image`, `FamilySync image`, `microsocks image` and `WaBridge image` workflows test
+`src/compras`, `src/familysync`, `src/microsocks` and `src/wabridge` and publish `ghcr.io/angelovati/aostore-<app>` for amd64 and
 arm64 on every push to the default branch.
 After the first publish, make the package public in GitHub and pin its digest in
 `aostore-<app>/docker-compose.yml`.

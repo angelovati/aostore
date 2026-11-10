@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a5c">
+  <title>WaBridge</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="link-screen" class="link-screen" hidden>
+    <div class="link-card">
+      <img src="icon.svg" alt="" class="link-logo">
+      <h1>Vinculá tu WhatsApp</h1>
+      <ol>
+        <li>Abrí WhatsApp en el teléfono.</li>
+        <li>Tocá <b>Ajustes</b> (iPhone) o <b>⋮</b> (Android) y elegí <b>Dispositivos vinculados</b>.</li>
+        <li>Tocá <b>Vincular un dispositivo</b> y escaneá este código.</li>
+      </ol>
+      <div class="qr-box">
+        <img id="qr" alt="Código QR para vincular WhatsApp" hidden>
+        <div id="qr-wait" class="qr-wait">Generando código…</div>
+      </div>
+      <p id="link-error" class="error" hidden></p>
+      <details class="pairing">
+        <summary>Vincular con número de teléfono</summary>
+        <form id="pairing-form">
+          <label>Tu número con código de país
+            <input id="pairing-phone" inputmode="tel" placeholder="5491122334455" autocomplete="tel">
+          </label>
+          <button type="submit">Pedir código</button>
+        </form>
+        <p id="pairing-code" class="pairing-code" hidden></p>
+        <p class="hint">En el teléfono elegí <b>Vincular con el número de teléfono</b> e ingresá el código.</p>
+      </details>
+    </div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <aside class="sidebar">
+      <header class="bar">
+        <div class="me">
+          <span id="me-name">WhatsApp</span>
+          <small id="conn-status"></small>
+        </div>
+        <button id="new-chat" class="icon-btn" title="Nuevo chat" aria-label="Nuevo chat">✎</button>
+        <button id="open-settings" class="icon-btn" title="Ajustes y MCP" aria-label="Ajustes">⚙</button>
+      </header>
+      <div class="search"><input id="search" type="search" placeholder="Buscar chat o número" autocomplete="off"></div>
+      <div id="sync-note" class="sync-note" hidden>Sincronizando mensajes del teléfono…</div>
+      <ul id="chat-list" class="chat-list"></ul>
+    </aside>
+
+    <main class="conversation" id="conversation">
+      <div id="empty" class="empty">
+        <img src="icon.svg" alt="" width="72" height="72">
+        <p>Elegí un chat para ver los mensajes.</p>
+        <p class="hint">Claude puede leer y enviar mensajes con MCP: mirá ⚙ Ajustes.</p>
+      </div>
+      <section id="chat" class="chat" hidden>
+        <header class="bar chat-bar">
+          <button id="back" class="icon-btn back" aria-label="Volver">←</button>
+          <div class="chat-title">
+            <span id="chat-name"></span>
+            <small id="chat-sub"></small>
+          </div>
+        </header>
+        <div id="messages" class="messages"></div>
+        <div id="reply-preview" class="reply-preview" hidden>
+          <span id="reply-text"></span>
+          <button id="reply-cancel" class="icon-btn" aria-label="Cancelar respuesta">✕</button>
+        </div>
+        <form id="composer" class="composer">
+          <label class="icon-btn attach" title="Adjuntar archivo">📎<input id="file" type="file" hidden></label>
+          <textarea id="text" rows="1" placeholder="Escribí un mensaje" autocomplete="off"></textarea>
+          <button type="submit" class="send" aria-label="Enviar">➤</button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="settings" class="settings">
+    <form method="dialog" class="settings-head">
+      <h2>Ajustes</h2>
+      <button class="icon-btn" aria-label="Cerrar">✕</button>
+    </form>
+    <section>
+      <h3>Conectar Claude (MCP)</h3>
+      <p>Con esta dirección Claude puede leer tus chats, enviar mensajes, reaccionar y esperar mensajes nuevos.
+        Quien tenga la dirección puede usar tu WhatsApp: no la compartas.</p>
+      <label>Dirección MCP en tu red local
+        <div class="copy-row"><input id="mcp-url" readonly><button type="button" data-copy="mcp-url">Copiar</button></div>
+      </label>
+      <label>Claude Code
+        <div class="copy-row"><input id="mcp-cmd" readonly><button type="button" data-copy="mcp-cmd">Copiar</button></div>
+      </label>
+      <details>
+        <summary>Claude Desktop y claude.ai</summary>
+        <p>En Claude Desktop agregá esto a <code>claude_desktop_config.json</code> (Ajustes → Desarrollador → Editar configuración):</p>
+        <pre id="desktop-config"></pre>
+        <p>claude.ai (web y celular) solo acepta direcciones públicas con https: publicá el puerto MCP con un túnel
+          (por ejemplo Cloudflare Tunnel o Tailscale Funnel) y agregalo en <b>Ajustes → Conectores → Agregar conector personalizado</b>
+          con la dirección <code>https://&lt;tu-túnel&gt;/mcp/&lt;token&gt;</code>.</p>
+      </details>
+      <details>
+        <summary>Que Claude Code reaccione solo a los mensajes que llegan (channels)</summary>
+        <p>Descargá <a href="whatsapp-channel.mjs" download>whatsapp-channel.mjs</a> y agregalo al <code>.mcp.json</code> del proyecto:</p>
+        <pre id="channel-config"></pre>
+        <p>Iniciá Claude Code con <code>claude --dangerously-load-development-channels server:whatsapp</code>.
+          Cada mensaje que recibas le llega a Claude, que puede contestar con la herramienta <i>reply</i>.
+          Agregá <code>--only 5491122334455</code> a los argumentos para escuchar solo a ciertos números.</p>
+      </details>
+      <label class="check"><input type="checkbox" id="read-only"> Solo lectura: Claude no puede enviar mensajes ni reacciones</label>
+      <button type="button" id="new-token" class="secondary">Generar otra dirección (la anterior deja de funcionar)</button>
+    </section>
+    <section>
+      <h3>Webhook</h3>
+      <p>Cada mensaje recibido se envía por POST en JSON a esta dirección (n8n, Home Assistant, etc.).
+        La firma HMAC-SHA256 del cuerpo va en <code>X-WaBridge-Signature</code>.</p>
+      <label>URL
+        <div class="copy-row"><input id="webhook-url" type="url" placeholder="http://homeassistant.local:8123/api/webhook/whatsapp"><button type="button" id="webhook-save">Guardar</button></div>
+      </label>
+      <label>Secreto para la firma
+        <div class="copy-row"><input id="webhook-secret" readonly><button type="button" data-copy="webhook-secret">Copiar</button></div>
+      </label>
+      <label class="check"><input type="checkbox" id="webhook-groups"> Incluir mensajes de grupos</label>
+      <button type="button" id="webhook-test" class="secondary">Enviar mensaje de prueba</button>
+    </section>
+    <section>
+      <h3>Cuenta</h3>
+      <p id="account-info"></p>
+      <button type="button" id="logout" class="danger">Desvincular WhatsApp y borrar los mensajes guardados</button>
+    </section>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
