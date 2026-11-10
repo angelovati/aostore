@@ -106,9 +106,13 @@ function renderStatus() {
     $('qr').hidden = !s.qr;
     if (s.qr) $('qr').src = s.qr;
     $('qr-wait').hidden = !!s.qr;
-    $('qr-wait').textContent = s.status === 'error' ? 'No se pudo conectar con WhatsApp. Reintentando…' : 'Generando código…';
+    $('qr-wait').textContent = s.error
+      ? `Reintentando${s.retryInSeconds ? ` en ${s.retryInSeconds} s` : ''}…`
+      : 'Conectando con WhatsApp para generar el código…';
     $('link-error').hidden = !s.error;
     $('link-error').textContent = s.error || '';
+    $('link-version').hidden = !s.waVersion;
+    $('link-version').textContent = s.waVersion ? `Versión de WhatsApp Web: ${s.waVersion}` : '';
     $('pairing-code').hidden = !s.pairingCode;
     $('pairing-code').textContent = s.pairingCode ? s.pairingCode.replace(/(.{4})(.{4})/, '$1-$2') : '';
   }
@@ -426,7 +430,7 @@ $('pairing-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
     const { code } = await api('api/pairing-code', { method: 'POST', body: JSON.stringify({ phone: $('pairing-phone').value }) });
-    if (!code) toast('Pidiendo el código…');
+    if (!code) toast('El código aparece acá en cuanto la app se conecte con WhatsApp');
   } catch (err) {
     toast(err.message, true);
   }

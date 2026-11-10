@@ -10,6 +10,7 @@ import makeWASocket, {
   Browsers,
   downloadMediaMessage,
   jidNormalizedUser,
+  fetchLatestWaWebVersion,
 } from 'baileys';
 import pino from 'pino';
 import QRCode from 'qrcode';
@@ -18,6 +19,22 @@ import { isGroupJid } from './db.js';
 
 const logger = pino({ level: process.env.BAILEYS_LOG_LEVEL || 'warn' });
 
+// Why WhatsApp closed the connection, for the link screen
+const CLOSE_REASONS = {
+  405: 'WhatsApp rechazó la conexión (405). Suele pasar cuando la versión de WhatsApp Web que usa la app quedó vieja.',
+  403: 'WhatsApp bloqueó la conexión (403).',
+  408: 'No hubo respuesta de WhatsApp (tiempo agotado). Revisá la conexión a internet del Umbrel.',
+  428: 'Se cortó la conexión con WhatsApp.',
+  500: 'La sesión guardada está dañada; se genera una nueva.',
+  503: 'WhatsApp no está disponible en este momento.',
+};
+
+// WA_VERSION=2.3000.1234567890 forces a WhatsApp Web version
+function parseVersion(value) {
+  const parts = String(value || '').split('.').map(Number);
+  return parts.length === 3 && parts.every((n) => Number.isInteger(n) && n >= 0) ? parts : null;
+}
+
 function lidPair(a, b) {
   if (a?.endsWith('@lid') && b?.endsWith('@s.whatsapp.net')) return [a, b];
   if (b?.endsWith('@lid') && a?.endsWith('@s.whatsapp.net')) return [b, a];
@@ -25,8 +42,10 @@ function lidPair(a, b) {
 }
 
 export class WhatsApp extends EventEmitter {
-  constructor({ db, authDir, makeSocket = makeWASocket }) {
+  constructor({ db, authDir, makeSocket = makeWASocket, fetchVersion = fetchLatestWaWebVersion }) {
     super();
+    this.fetchVersion = fetchVersion;
+    this.failedBeforeQr = 0;
     this.setMaxListeners(100);
     this.db = db;
     this.authDir = authDir;
@@ -44,19 +63,48 @@ export class WhatsApp extends EventEmitter {
   }
 
   publicState() {
-    const { status, qr, me, error, syncing, pairingCode } = this.state;
-    return { status, qr, me, error, syncing: !!syncing, pairingCode: pairingCode || null };
+    const { status, qr, me, error, syncing, pairingCode, waVersion, retryInSeconds } = this.state;
+    return {
+      status, qr, me, error, syncing: !!syncing, pairingCode: pairingCode || null,
+      waVersion: waVersion || null, retryInSeconds: retryInSeconds ?? null,
+    };
   }
 
   get connected() {
     return this.state.status === 'open';
   }
 
+  // WhatsApp refuses clients that announce an old WhatsApp Web version (405,
+  // and no QR), and the one bundled with Baileys ages quickly: ask
+  // web.whatsapp.com for the current one, falling back to the last that worked.
+  async resolveVersion() {
+    const forced = parseVersion(process.env.WA_VERSION);
+    if (forced) return forced;
+    try {
+      const { version, error } = await this.fetchVersion({ signal: AbortSignal.timeout(10000) });
+      if (!error && parseVersion(version?.join('.'))) {
+        this.db.setKv('waVersion', version);
+        return version;
+      }
+      logger.warn({ error }, 'no se pudo leer la versión de WhatsApp Web');
+    } catch (err) {
+      logger.warn({ err }, 'no se pudo leer la versión de WhatsApp Web');
+    }
+    return this.db.getKv('waVersion', null) || undefined;
+  }
+
   async start() {
     this.stopped = false;
     fs.mkdirSync(this.authDir, { recursive: true });
+    const version = await this.resolveVersion();
+    if (this.stopped) return;
     const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
+    this.registered = !!state.creds.registered;
+    this.qrSeen = false;
+    if (version) this.state.waVersion = version.join('.');
+    logger.info({ version, registered: this.registered }, 'conectando con WhatsApp');
     const sock = this.makeSocket({
+      ...(version ? { version } : {}),
       auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
       logger,
       // Shown in WhatsApp > Linked devices. "Desktop" makes the phone send
@@ -103,6 +151,8 @@ export class WhatsApp extends EventEmitter {
     if (sock !== this.sock) return;
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
+      this.qrSeen = true;
+      this.failedBeforeQr = 0;
       if (this.pairingPhone) {
         const phone = this.pairingPhone;
         this.pairingPhone = null;
@@ -110,14 +160,16 @@ export class WhatsApp extends EventEmitter {
           const code = await sock.requestPairingCode(phone);
           this.setState({ status: 'qr', pairingCode: code, error: null });
         } catch (err) {
+          logger.warn({ err }, 'requestPairingCode');
           this.setState({ error: `No se pudo pedir el código: ${err.message}` });
         }
       }
       const dataUrl = await QRCode.toDataURL(qr, { margin: 1, width: 320 });
-      this.setState({ status: 'qr', qr: dataUrl });
+      this.setState({ status: 'qr', qr: dataUrl, error: this.state.pairingCode ? this.state.error : null });
     }
     if (connection === 'open') {
       this.retries = 0;
+      this.registered = true;
       const id = jidNormalizedUser(sock.user?.id);
       this.setState({
         status: 'open',
@@ -132,6 +184,7 @@ export class WhatsApp extends EventEmitter {
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       if (this.stopped) return;
+      logger.warn({ code, message: lastDisconnect?.error?.message }, 'conexión cerrada');
       if (code === DisconnectReason.loggedOut) {
         // The device was removed from the phone: start over with a new QR
         this.reset();
@@ -140,10 +193,23 @@ export class WhatsApp extends EventEmitter {
         return;
       }
       // restartRequired (515) is normal right after scanning the QR
-      const delay = code === DisconnectReason.restartRequired ? 0 : Math.min(60000, 2000 * 2 ** this.retries++);
-      this.setState({ status: this.state.me ? 'reconnecting' : 'connecting', qr: null });
+      const restart = code === DisconnectReason.restartRequired;
+      const delay = restart ? 0 : Math.min(60000, 2000 * 2 ** this.retries++);
+      let error = this.state.error;
+      if (!restart && !this.registered) {
+        error = CLOSE_REASONS[code] || `No se pudo conectar con WhatsApp${code ? ` (${code})` : ''}: ${lastDisconnect?.error?.message || 'error desconocido'}.`;
+        // Not linked yet and WhatsApp keeps closing before sending a QR:
+        // start from fresh keys in case the saved ones are the problem
+        if (!this.qrSeen && ++this.failedBeforeQr >= 3) {
+          this.failedBeforeQr = 0;
+          this.sock = null;
+          fs.rmSync(this.authDir, { recursive: true, force: true });
+        }
+      }
+      this.setState({ status: this.state.me ? 'reconnecting' : 'connecting', qr: null, error: restart ? null : error, retryInSeconds: Math.round(delay / 1000) });
+      const current = this.sock;
       setTimeout(() => {
-        if (!this.stopped && sock === this.sock) this.start().catch((err) => this.fail(err));
+        if (!this.stopped && this.sock === current) this.start().catch((err) => this.fail(err));
       }, delay);
     }
   }
