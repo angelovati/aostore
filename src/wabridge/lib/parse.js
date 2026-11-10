@@ -73,6 +73,20 @@ export function describeContent(content) {
   if (kind === 'reactionMessage') return { type: 'reaction', text: body.text || '' };
   if (kind === 'protocolMessage') return { type: 'protocol' };
   if (kind === 'buttonsResponseMessage') return { type: 'text', text: body.selectedDisplayText };
+  // Business messages: templates, buttons and lists
+  if (kind === 'templateMessage') {
+    const t = body.hydratedTemplate || body.hydratedFourRowTemplate || body.fourRowTemplate;
+    const text = [t?.hydratedTitleText, t?.hydratedContentText || t?.content?.namespace, t?.hydratedFooterText]
+      .filter(Boolean).join('\n') || body.interactiveMessageTemplate?.body?.text;
+    return { type: 'text', text: text || '[mensaje de empresa]' };
+  }
+  if (kind === 'interactiveMessage') {
+    const text = [body.header?.title, body.body?.text, body.footer?.text].filter(Boolean).join('\n');
+    return { type: 'text', text: text || '[mensaje de empresa]' };
+  }
+  if (kind === 'buttonsMessage') return { type: 'text', text: [body.contentText, body.footerText].filter(Boolean).join('\n') || body.text };
+  if (kind === 'listMessage') return { type: 'text', text: [body.title, body.description].filter(Boolean).join('\n') };
+  if (kind === 'interactiveResponseMessage') return { type: 'text', text: body.body?.text || '' };
   if (kind === 'listResponseMessage') return { type: 'text', text: body.title };
   if (kind === 'templateButtonReplyMessage') return { type: 'text', text: body.selectedDisplayText };
   if (kind === 'eventMessage') return { type: 'event', text: body.name };
@@ -143,7 +157,7 @@ export function parseMessage(msg, { meJid } = {}) {
       id: key.id,
       fromMe,
       sender,
-      senderName: fromMe ? null : msg.pushName || null,
+      senderName: fromMe ? null : msg.pushName || msg.verifiedBizName || null,
       timestamp: toNumber(msg.messageTimestamp) || Math.floor(Date.now() / 1000),
       type: info.type,
       text: info.text ?? null,

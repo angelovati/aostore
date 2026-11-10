@@ -108,15 +108,20 @@ export class Db {
     this.db.close();
   }
 
+  // Nestable: an inner call becomes a savepoint of the outer transaction
   transaction(fn) {
-    this.db.exec('BEGIN');
+    const depth = (this.txDepth = (this.txDepth || 0) + 1);
+    const name = `sp${depth}`;
+    this.db.exec(depth === 1 ? 'BEGIN' : `SAVEPOINT ${name}`);
     try {
       const result = fn();
-      this.db.exec('COMMIT');
+      this.db.exec(depth === 1 ? 'COMMIT' : `RELEASE ${name}`);
       return result;
     } catch (err) {
-      this.db.exec('ROLLBACK');
+      this.db.exec(depth === 1 ? 'ROLLBACK' : `ROLLBACK TO ${name}; RELEASE ${name}`);
       throw err;
+    } finally {
+      this.txDepth = depth - 1;
     }
   }
 
@@ -217,7 +222,25 @@ export class Db {
   }
 
   chatDisplayName(row) {
-    return row.name || this.contactName(row.jid) || (phoneOf(row.jid) ? `+${phoneOf(row.jid)}` : row.jid);
+    if (row.name) return row.name;
+    const contact = this.contactName(row.jid);
+    if (contact) return contact;
+    if (row.jid === '0@s.whatsapp.net') return 'WhatsApp';
+    if (phoneOf(row.jid)) return `+${phoneOf(row.jid)}`;
+    // Name the person used in their last message to us
+    const pushed = this.db.prepare(`SELECT sender_name FROM messages WHERE chat_jid = ? AND from_me = 0
+      AND sender_name IS NOT NULL ORDER BY ts DESC LIMIT 1`).get(row.jid)?.sender_name;
+    if (pushed) return pushed;
+    return row.jid.endsWith('@lid') ? 'Contacto sin nombre' : row.jid;
+  }
+
+  // LIDs whose phone number is still unknown
+  unmappedLids(limit = 500) {
+    return this.db.prepare(`SELECT jid FROM (
+        SELECT jid FROM chats WHERE jid LIKE '%@lid'
+        UNION SELECT jid FROM contacts WHERE jid LIKE '%@lid'
+        UNION SELECT DISTINCT sender AS jid FROM messages WHERE sender LIKE '%@lid'
+      ) LIMIT ?`).all(limit).map((r) => r.jid);
   }
 
   getChat(jid) {
