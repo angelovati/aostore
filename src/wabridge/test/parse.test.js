@@ -55,3 +55,12 @@ test('status updates and empty messages are skipped', () => {
   assert.equal(parseMessage({ key, message: null, messageStubType: 1 }), null);
   assert.equal(parseMessage({ key, message: { senderKeyDistributionMessage: {} } }), null);
 });
+
+test('business templates and interactive messages show their text', () => {
+  assert.equal(describeContent({ templateMessage: { hydratedTemplate: { hydratedTitleText: 'Turno', hydratedContentText: 'Su turno es mañana', hydratedFooterText: 'Clínica' } } }).text, 'Turno\nSu turno es mañana\nClínica');
+  assert.equal(describeContent({ interactiveMessage: { body: { text: 'Elegí una opción' }, footer: { text: 'Banco' } } }).text, 'Elegí una opción\nBanco');
+  assert.equal(describeContent({ interactiveMessage: {} }).text, '[mensaje de empresa]');
+  assert.equal(describeContent({ listMessage: { title: 'Menú', description: 'Opciones' } }).text, 'Menú\nOpciones');
+  const r = parseMessage({ key, message: { conversation: 'x' }, verifiedBizName: 'Mi Banco' });
+  assert.equal(r.row.senderName, 'Mi Banco');
+});

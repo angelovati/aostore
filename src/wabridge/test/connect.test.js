@@ -98,3 +98,29 @@ test('a pairing code asked before the QR is requested as soon as WhatsApp is rea
   assert.equal(await wa.requestPairingCode('5491122223333'), 'ABCD1234');
   wa.stop();
 });
+
+test('history with LID pairs and contacts is stored, and unknown LIDs are asked to Baileys', async () => {
+  const { fake, db, wa } = setup(async () => ({ version: [2, 3000, 9], isLatest: true }));
+  await wa.start();
+  const sock = fake.last();
+  sock.signalRepository = { lidMapping: { getPNsForLIDs: async (lids) => lids.filter((l) => l === '555@lid').map((lid) => ({ lid, pn: '5491155556666:3@s.whatsapp.net' })) } };
+  sock.ev.emit('connection.update', { connection: 'open' });
+  sock.ev.emit('messaging-history.set', {
+    chats: [{ id: '444@lid', name: undefined }, { id: '555@lid' }],
+    contacts: [{ id: '5491144440000@s.whatsapp.net', lid: '444@lid', name: 'Ana López' }, { id: '5491155556666@s.whatsapp.net', name: 'Beto' }],
+    messages: [
+      { key: { remoteJid: '444@lid', remoteJidAlt: '5491144440000@s.whatsapp.net', fromMe: true, id: 'M1' }, message: { conversation: 'hola Ana' }, messageTimestamp: 100 },
+      { key: { remoteJid: '555@lid', fromMe: false, id: 'M2' }, message: { conversation: 'soy Beto' }, messageTimestamp: 200 },
+    ],
+    lidPnMappings: [{ lid: '444@lid', pn: '5491144440000@s.whatsapp.net' }],
+    isLatest: true,
+  });
+  assert.equal(db.getChat('444@lid').name, 'Ana López');
+  assert.equal(db.getMessages('5491144440000@s.whatsapp.net')[0].text, 'hola Ana');
+  await wa.resolveLids();
+  const beto = db.listChats().find((c) => c.name === 'Beto');
+  assert.equal(beto.jid, '5491155556666@s.whatsapp.net');
+  assert.equal(db.getMessages(beto.jid)[0].text, 'soy Beto');
+  assert.deepEqual(db.unmappedLids(), []);
+  wa.stop();
+});

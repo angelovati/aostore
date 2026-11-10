@@ -52,3 +52,35 @@ test('messagesAfter is a cursor over incoming messages', () => {
   assert.deepEqual(db.messagesAfter(start, { chatJid: 'x@s.whatsapp.net' }).map((m) => m.id), ['M3']);
   assert.deepEqual(db.messagesAfter(db.lastSeq()), []);
 });
+
+test('transactions nest (a LID pair learned while storing a batch)', () => {
+  const db = new Db(':memory:');
+  db.transaction(() => {
+    db.upsertMessage(msg({ chatJid: '777@lid', sender: '777@lid', id: 'A' }));
+    db.addLidMapping('777@lid', '5491122223333@s.whatsapp.net');
+    db.upsertContact({ jid: '777@lid', name: 'Juan' });
+  });
+  assert.equal(db.listChats()[0].jid, '5491122223333@s.whatsapp.net');
+  assert.equal(db.listChats()[0].name, 'Juan');
+  // An inner failure rolls back only the inner part
+  db.transaction(() => {
+    db.upsertContact({ jid: 'x@s.whatsapp.net', name: 'X' });
+    assert.throws(() => db.transaction(() => {
+      db.upsertContact({ jid: 'y@s.whatsapp.net', name: 'Y' });
+      throw new Error('boom');
+    }));
+  });
+  assert.deepEqual(db.searchContacts('').map((c) => c.name).sort(), ['Juan', 'X']);
+});
+
+test('chat names: pushed name, the WhatsApp account and unknown LIDs', () => {
+  const db = new Db(':memory:');
+  db.upsertMessage(msg({ chatJid: '1@lid', sender: '1@lid', id: 'A', senderName: 'Pedro' }));
+  db.upsertMessage(msg({ chatJid: '2@lid', sender: 'me', fromMe: true, id: 'B' }));
+  db.upsertMessage(msg({ chatJid: '0@s.whatsapp.net', sender: '0@s.whatsapp.net', id: 'C' }));
+  const names = Object.fromEntries(db.listChats().map((c) => [c.jid, c.name]));
+  assert.equal(names['1@lid'], 'Pedro');
+  assert.equal(names['2@lid'], 'Contacto sin nombre');
+  assert.equal(names['0@s.whatsapp.net'], 'WhatsApp');
+  assert.deepEqual(db.unmappedLids().sort(), ['1@lid', '2@lid']);
+});

@@ -188,6 +188,7 @@ export class WhatsApp extends EventEmitter {
       });
       if (sock.user?.lid) this.db.addLidMapping(jidNormalizedUser(sock.user.lid), id);
       this.loadGroups(sock);
+      setTimeout(() => this.resolveLids(), 3000);
     }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
@@ -285,6 +286,28 @@ export class WhatsApp extends EventEmitter {
     this.storeMessages(messages);
     if (isLatest || progress === 100) this.setState({ syncing: false });
     this.emit('change', {});
+    clearTimeout(this.lidTimer);
+    this.lidTimer = setTimeout(() => this.resolveLids(), 5000);
+  }
+
+  // Ask Baileys for the phone numbers of contacts known only by their LID
+  // (it learns the pairs from history and message keys), so their chats
+  // merge with the phone ones and show the contact's name
+  async resolveLids() {
+    const store = this.sock?.signalRepository?.lidMapping;
+    if (!store?.getPNsForLIDs) return;
+    const lids = this.db.unmappedLids();
+    if (!lids.length) return;
+    try {
+      const pairs = (await store.getPNsForLIDs(lids)) || [];
+      let changed = false;
+      this.db.transaction(() => {
+        for (const { lid, pn } of pairs) changed = this.db.addLidMapping(lid, jidNormalizedUser(pn)) || changed;
+      });
+      if (changed) this.emit('change', {});
+    } catch (err) {
+      logger.warn({ err }, 'no se pudieron resolver los LID');
+    }
   }
 
   // Store messages; returns the new ones as stored rows
@@ -328,6 +351,10 @@ export class WhatsApp extends EventEmitter {
       if (live && !m.fromMe) this.emit('incoming', { message: m, chat: this.db.getChat(m.chatJid) });
     }
     if (messages.length) this.emit('change', {});
+    if (fresh.some((m) => m.chatJid.endsWith('@lid') || m.sender?.endsWith('@lid'))) {
+      clearTimeout(this.lidTimer);
+      this.lidTimer = setTimeout(() => this.resolveLids(), 1000);
+    }
   }
 
   onMessageUpdates(updates) {
@@ -381,6 +408,7 @@ export class WhatsApp extends EventEmitter {
 
   stop() {
     this.stopped = true;
+    clearTimeout(this.lidTimer);
     try {
       this.sock?.end(undefined);
     } catch {
