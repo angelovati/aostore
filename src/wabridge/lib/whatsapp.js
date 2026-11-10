@@ -29,6 +29,16 @@ const CLOSE_REASONS = {
   503: 'WhatsApp no está disponible en este momento.',
 };
 
+// How the app presents itself to WhatsApp (shown in Linked devices). A
+// desktop client gets more history from the phone, but WhatsApp closes the
+// connection before the QR (428) for some of them: macOS Desktop with full
+// history does (Baileys issue #2880), Windows Desktop does not. Before
+// linking, each failed attempt moves to the next profile.
+export const CLIENT_PROFILES = [
+  { name: 'Windows Desktop', browser: Browsers.windows('Desktop'), syncFullHistory: true },
+  { name: 'Chrome (Ubuntu)', browser: Browsers.ubuntu('Chrome'), syncFullHistory: false },
+];
+
 // WA_VERSION=2.3000.1234567890 forces a WhatsApp Web version
 function parseVersion(value) {
   const parts = String(value || '').split('.').map(Number);
@@ -45,7 +55,6 @@ export class WhatsApp extends EventEmitter {
   constructor({ db, authDir, makeSocket = makeWASocket, fetchVersion = fetchLatestWaWebVersion }) {
     super();
     this.fetchVersion = fetchVersion;
-    this.failedBeforeQr = 0;
     this.setMaxListeners(100);
     this.db = db;
     this.authDir = authDir;
@@ -63,10 +72,10 @@ export class WhatsApp extends EventEmitter {
   }
 
   publicState() {
-    const { status, qr, me, error, syncing, pairingCode, waVersion, retryInSeconds } = this.state;
+    const { status, qr, me, error, syncing, pairingCode, waVersion, retryInSeconds, client } = this.state;
     return {
       status, qr, me, error, syncing: !!syncing, pairingCode: pairingCode || null,
-      waVersion: waVersion || null, retryInSeconds: retryInSeconds ?? null,
+      waVersion: waVersion || null, retryInSeconds: retryInSeconds ?? null, client: client || null,
     };
   }
 
@@ -102,15 +111,15 @@ export class WhatsApp extends EventEmitter {
     this.registered = !!state.creds.registered;
     this.qrSeen = false;
     if (version) this.state.waVersion = version.join('.');
-    logger.info({ version, registered: this.registered }, 'conectando con WhatsApp');
+    const profile = CLIENT_PROFILES[this.db.getKv('clientProfile', 0) % CLIENT_PROFILES.length];
+    this.state.client = profile.name;
+    logger.info({ version, registered: this.registered, client: profile.name }, 'conectando con WhatsApp');
     const sock = this.makeSocket({
       ...(version ? { version } : {}),
       auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
       logger,
-      // Shown in WhatsApp > Linked devices. "Desktop" makes the phone send
-      // more history than a browser would.
-      browser: Browsers.macOS('Desktop'),
-      syncFullHistory: true,
+      browser: profile.browser,
+      syncFullHistory: profile.syncFullHistory,
       markOnlineOnConnect: false,
       getMessage: async (key) => decodeRaw(this.db.getRaw(key.remoteJid, key.id))?.message || undefined,
     });
@@ -152,7 +161,6 @@ export class WhatsApp extends EventEmitter {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
       this.qrSeen = true;
-      this.failedBeforeQr = 0;
       if (this.pairingPhone) {
         const phone = this.pairingPhone;
         this.pairingPhone = null;
@@ -194,14 +202,15 @@ export class WhatsApp extends EventEmitter {
       }
       // restartRequired (515) is normal right after scanning the QR
       const restart = code === DisconnectReason.restartRequired;
-      const delay = restart ? 0 : Math.min(60000, 2000 * 2 ** this.retries++);
+      // Not linked yet: someone is probably looking at the screen, retry soon
+      const delay = restart ? 0 : Math.min(this.registered ? 60000 : 10000, 2000 * 2 ** this.retries++);
       let error = this.state.error;
       if (!restart && !this.registered) {
         error = CLOSE_REASONS[code] || `No se pudo conectar con WhatsApp${code ? ` (${code})` : ''}: ${lastDisconnect?.error?.message || 'error desconocido'}.`;
-        // Not linked yet and WhatsApp keeps closing before sending a QR:
-        // start from fresh keys in case the saved ones are the problem
-        if (!this.qrSeen && ++this.failedBeforeQr >= 3) {
-          this.failedBeforeQr = 0;
+        // Not linked yet and WhatsApp closed before sending a QR: try the
+        // next client profile, from fresh keys
+        if (!this.qrSeen) {
+          this.db.setKv('clientProfile', (this.db.getKv('clientProfile', 0) + 1) % CLIENT_PROFILES.length);
           this.sock = null;
           fs.rmSync(this.authDir, { recursive: true, force: true });
         }

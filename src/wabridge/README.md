@@ -24,6 +24,13 @@ WhatsApp Web, así que al conectar la app lee la versión actual de
 `web.whatsapp.com` y recuerda la última que funcionó. Con `WA_VERSION`
 (por ejemplo `2.3000.1234567890`) se puede forzar una.
 
+WhatsApp también corta la conexión antes del QR (error 428) según cómo se
+presenta el cliente: como WhatsApp Desktop para Mac con historial completo
+falla ([Baileys #2880](https://github.com/WhiskeySockets/Baileys/issues/2880)).
+La app se presenta como WhatsApp Desktop para Windows, y si la conexión se
+corta antes del QR prueba con Chrome (sin historial completo) y vuelve a
+empezar con claves nuevas.
+
 Después de vincular, el teléfono envía el historial reciente; los chats van
 apareciendo a medida que llega. La sesión queda guardada en `DATA_DIR/auth` y
 los mensajes en `DATA_DIR/wabridge.db` (SQLite). Si el dispositivo se quita

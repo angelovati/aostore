@@ -112,7 +112,7 @@ function renderStatus() {
     $('link-error').hidden = !s.error;
     $('link-error').textContent = s.error || '';
     $('link-version').hidden = !s.waVersion;
-    $('link-version').textContent = s.waVersion ? `Versión de WhatsApp Web: ${s.waVersion}` : '';
+    $('link-version').textContent = [s.waVersion && `Versión de WhatsApp Web: ${s.waVersion}`, s.client && `se presenta como ${s.client}`].filter(Boolean).join(' · ');
     $('pairing-code').hidden = !s.pairingCode;
     $('pairing-code').textContent = s.pairingCode ? s.pairingCode.replace(/(.{4})(.{4})/, '$1-$2') : '';
   }
